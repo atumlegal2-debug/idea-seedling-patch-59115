@@ -15,6 +15,7 @@ import ProfessorXP from "./pages/ProfessorXP";
 import ProfessorSubmissionReview from "./pages/ProfessorSubmissionReview";
 import ProfessorPoderes from "./pages/ProfessorPoderes";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -26,17 +27,25 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/poderes" element={<Poderes />} />
-          <Route path="/aulas" element={<Aulas />} />
-          <Route path="/missoes" element={<Missoes />} />
-          <Route path="/professor" element={<Professor />} />
-          <Route path="/professor/atividades" element={<ProfessorAtividades />} />
-          <Route path="/professor/missoes" element={<ProfessorMissoes />} />
-          <Route path="/professor/xp" element={<ProfessorXP />} />
-          <Route path="/professor/submission/:submissionId" element={<ProfessorSubmissionReview />} />
-          <Route path="/professor/poderes" element={<ProfessorPoderes />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+          {/* Student Routes */}
+          <Route element={<ProtectedRoute isProfessorRoute={false} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/poderes" element={<Poderes />} />
+            <Route path="/aulas" element={<Aulas />} />
+            <Route path="/missoes" element={<Missoes />} />
+          </Route>
+
+          {/* Professor Routes */}
+          <Route element={<ProtectedRoute isProfessorRoute={true} />}>
+            <Route path="/professor" element={<Professor />} />
+            <Route path="/professor/atividades" element={<ProfessorAtividades />} />
+            <Route path="/professor/missoes" element={<ProfessorMissoes />} />
+            <Route path="/professor/xp" element={<ProfessorXP />} />
+            <Route path="/professor/submission/:submissionId" element={<ProfessorSubmissionReview />} />
+            <Route path="/professor/poderes" element={<ProfessorPoderes />} />
+          </Route>
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

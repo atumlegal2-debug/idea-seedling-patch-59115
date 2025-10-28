@@ -41,14 +41,6 @@ const ProfessorMissoes = () => {
   const [xpReward, setXpReward] = useState(20);
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    const userType = localStorage.getItem("userType");
-    
-    if (currentUser !== "Professor1812" || userType !== "professor") {
-      navigate("/");
-      return;
-    }
-
     const storedMissions = JSON.parse(localStorage.getItem("missions") || "[]");
     setMissions(storedMissions);
 
@@ -57,7 +49,7 @@ const ProfessorMissoes = () => {
 
     const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
     setUsers(storedUsers);
-  }, [navigate]);
+  }, []);
 
   const createMission = () => {
     if (!title.trim() || !description.trim()) {

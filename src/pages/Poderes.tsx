@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,17 +61,9 @@ const powerData = {
 
 const Poderes = () => {
   const navigate = useNavigate();
-  const { user, loading } = useUser();
+  const { user } = useUser();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/");
-    }
-  }, [user, loading, navigate]);
-
-  if (loading || !user) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
+  if (!user) return null; // ProtectedRoute handles this
 
   const elementData = powerData[user.element];
 

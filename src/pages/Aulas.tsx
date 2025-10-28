@@ -34,17 +34,11 @@ interface Activity {
 
 const Aulas = () => {
   const navigate = useNavigate();
-  const { user, loading } = useUser();
+  const { user } = useUser();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [answers, setAnswers] = useState<Record<string, string | Record<string, boolean>>>({});
-
-  useEffect(() => {
-    if (!loading && (!user || user.isProfessor)) {
-      navigate("/");
-    }
-  }, [user, loading, navigate]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -115,6 +109,8 @@ const Aulas = () => {
       setAnswers({});
     }
   };
+
+  if (!user) return null;
 
   if (selectedActivity) {
     return (

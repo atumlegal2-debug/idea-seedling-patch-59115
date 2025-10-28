@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { useUser } from "@/contexts/UserContext";
 
 interface Mission {
   id: string;
@@ -20,20 +21,12 @@ interface MissionProgress {
 
 const Missoes = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [missionProgress, setMissionProgress] = useState<MissionProgress[]>([]);
-  const [username, setUsername] = useState("");
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    const userType = localStorage.getItem("userType");
-    
-    if (!currentUser || userType !== "student") {
-      navigate("/");
-      return;
-    }
-
-    setUsername(currentUser);
+    if (!user) return;
 
     // Load missions
     const storedMissions = JSON.parse(localStorage.getItem("missions") || "[]");
@@ -42,11 +35,13 @@ const Missoes = () => {
     // Load mission progress
     const storedProgress = JSON.parse(localStorage.getItem("missionProgress") || "[]");
     setMissionProgress(storedProgress);
-  }, [navigate]);
+  }, [user]);
 
   const handleAcceptMission = (mission: Mission) => {
+    if (!user) return;
+
     const existingProgress = missionProgress.find(
-      p => p.missionId === mission.id && p.username === username
+      p => p.missionId === mission.id && p.username === user.username
     );
 
     if (existingProgress) {
@@ -62,7 +57,7 @@ const Missoes = () => {
 
     const newProgress: MissionProgress = {
       missionId: mission.id,
-      username,
+      username: user.username,
       status: "pending"
     };
 
@@ -73,10 +68,13 @@ const Missoes = () => {
   };
 
   const getMissionStatus = (missionId: string) => {
+    if (!user) return null;
     return missionProgress.find(
-      p => p.missionId === missionId && p.username === username
+      p => p.missionId === missionId && p.username === user.username
     );
   };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen p-6 md:p-8">

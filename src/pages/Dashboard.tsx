@@ -13,12 +13,6 @@ const Dashboard = () => {
   const { user, logout, loading, refreshUser } = useUser();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/");
-    }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
     if (user) {
       const channel = supabase
         .channel(`public:users:id=eq.${user.id}`)
@@ -97,7 +91,7 @@ const Dashboard = () => {
     return gradients[element] || "";
   };
 
-  if (loading || !user) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  if (loading || !user) return null; // ProtectedRoute handles loading/redirect
 
   return (
     <div className="min-h-screen p-6 md:p-8">

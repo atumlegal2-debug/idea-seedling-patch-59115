@@ -1,25 +1,16 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Target, Trophy, LogOut, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useUser } from "@/contexts/UserContext";
 
 const Professor = () => {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    const userType = localStorage.getItem("userType");
-    
-    if (currentUser !== "Professor1812" || userType !== "professor") {
-      navigate("/");
-    }
-  }, [navigate]);
+  const { logout } = useUser();
 
   const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("userType");
+    logout();
     navigate("/");
     toast.success("Até breve, Professor!");
   };
