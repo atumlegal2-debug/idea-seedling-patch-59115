@@ -17,6 +17,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user, login, loading } = useUser();
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   
   const [loginUsername, setLoginUsername] = useState("");
   
@@ -111,7 +112,11 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
+    <div 
+      className={`min-h-screen flex flex-col items-center px-4 py-8 relative overflow-hidden transition-all duration-500 ${
+        isKeyboardVisible ? 'justify-start' : 'justify-center'
+      }`}
+    >
       <div 
         className="absolute inset-0 z-0"
         style={{
@@ -142,6 +147,7 @@ const Index = () => {
                   placeholder="Ana1313"
                   value={loginUsername}
                   onType={setLoginUsername}
+                  onToggle={setIsKeyboardVisible}
                 />
               </div>
 
@@ -177,6 +183,7 @@ const Index = () => {
                   placeholder="Ana Silva"
                   value={name}
                   onType={setName}
+                  onToggle={setIsKeyboardVisible}
                 />
               </div>
 
@@ -186,6 +193,7 @@ const Index = () => {
                   placeholder="Ana1313"
                   value={username}
                   onType={setUsername}
+                  onToggle={setIsKeyboardVisible}
                 />
                 <p className="text-xs text-muted-foreground">Nome + 4 dígitos (ex: wooyoung1918)</p>
               </div>
