@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Delete, Keyboard } from "lucide-react";
 
@@ -38,17 +38,6 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
     onType('');
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
   return (
     <div className="relative w-full">
       <div className="flex gap-2 items-center">
@@ -74,9 +63,9 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Keyboard */}
-          <div className="fixed inset-x-0 bottom-0 z-50 animate-slide-in-bottom">
-            <div className="bg-gradient-to-b from-card/95 via-card to-card/98 backdrop-blur-xl border-t-4 border-primary/40 shadow-[0_-10px_50px_-10px_rgba(168,85,247,0.4)] p-4 pb-safe">
+          {/* Keyboard Container - Centered */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg animate-fade-in">
+            <div className="bg-gradient-to-b from-card/95 via-card to-card/98 backdrop-blur-xl border-t-4 border-primary/40 shadow-[0_-10px_50px_-10px_rgba(168,85,247,0.4)] p-4 rounded-lg">
               {/* Header */}
               <div className="flex justify-between items-center mb-3 px-1">
                 <div className="flex items-center gap-2">
