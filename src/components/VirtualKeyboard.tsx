@@ -93,6 +93,11 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
                   <X className="w-4 h-4" />
                 </Button>
               </div>
+
+              {/* Display Area */}
+              <div className="w-full max-w-2xl mx-auto bg-input/50 rounded-lg p-3 mb-4 text-lg font-serif text-left min-h-[52px] break-words border border-border/50">
+                {value || <span className="text-muted-foreground">{placeholder}</span>}
+              </div>
               
               {/* Keys */}
               <div className="space-y-2 max-w-2xl mx-auto">
