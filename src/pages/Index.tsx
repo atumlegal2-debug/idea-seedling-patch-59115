@@ -111,7 +111,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-auto">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
       <div 
         className="absolute inset-0 z-0"
         style={{
