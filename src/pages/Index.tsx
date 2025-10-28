@@ -11,7 +11,7 @@ import earthIcon from "@/assets/earth-element.png";
 import airIcon from "@/assets/air-element.png";
 import { useUser, AppUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
-import { VirtualKeyboardInput } from "@/components/VirtualKeyboardInput";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -138,14 +138,10 @@ const Index = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-base font-heading">Nome de Usuário</Label>
-                <VirtualKeyboardInput
-                  id="username"
-                  type="text"
+                <VirtualKeyboard
                   placeholder="Ana1313"
                   value={loginUsername}
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-                  className="text-base"
+                  onType={setLoginUsername}
                 />
               </div>
 
@@ -177,25 +173,19 @@ const Index = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-base font-heading">Nome Completo</Label>
-                <VirtualKeyboardInput
-                  id="name"
-                  type="text"
+                <VirtualKeyboard
                   placeholder="Ana Silva"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="text-base"
+                  onType={setName}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="new-username" className="text-base font-heading">Nome de Usuário</Label>
-                <VirtualKeyboardInput
-                  id="new-username"
-                  type="text"
+                <VirtualKeyboard
                   placeholder="Ana1313"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="text-base"
+                  onType={setUsername}
                 />
                 <p className="text-xs text-muted-foreground">Nome + 4 dígitos (ex: wooyoung1918)</p>
               </div>
