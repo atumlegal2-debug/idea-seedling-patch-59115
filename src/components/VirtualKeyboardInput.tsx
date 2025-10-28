@@ -36,7 +36,7 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
     };
 
     const KeyboardContent = (
-      <div className="bg-card/95 backdrop-blur-sm p-2 sm:p-4">
+      <div className="p-2 sm:p-4">
         <div className="w-full bg-input rounded-md p-3 mb-4 text-lg font-serif text-left min-h-[52px] break-words">
           {props.value || <span className="text-muted-foreground">{props.placeholder}</span>}
         </div>
@@ -89,10 +89,13 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
           type="button"
           variant="ghost"
           size="sm"
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 px-0"
+          className={cn(
+            "absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 px-0 transition-all",
+            isOpen && "text-primary shadow-glow rounded-full scale-110"
+          )}
           onClick={() => setIsOpen(true)}
         >
-          <KeyboardIcon className="h-5 w-5 text-muted-foreground" />
+          <KeyboardIcon className="h-5 w-5" />
           <span className="sr-only">Abrir teclado virtual</span>
         </Button>
       </div>
@@ -104,7 +107,7 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
           {trigger}
           <Drawer open={isOpen} onOpenChange={setIsOpen}>
             <DrawerContent className="bg-transparent border-none p-0">
-              <div className="bg-card/95 backdrop-blur-sm rounded-t-lg p-4 border-t-2 border-primary/30">
+              <div className="magical-keyboard-container-mobile">
                 {KeyboardContent}
               </div>
             </DrawerContent>
@@ -118,7 +121,7 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
         {trigger}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-4xl">
-            <div className="bg-card/95 backdrop-blur-sm rounded-lg p-4 border-2 border-primary/30 shadow-card">
+            <div className="magical-keyboard-container-desktop">
               {KeyboardContent}
             </div>
           </DialogContent>
