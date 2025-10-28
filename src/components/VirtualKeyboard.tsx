@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Delete, Keyboard } from "lucide-react";
 
@@ -11,6 +11,7 @@ interface VirtualKeyboardProps {
 const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpperCase, setIsUpperCase] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const keys = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
@@ -41,6 +42,13 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // After the keyboard animation, scroll the input into the center of the view.
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 300);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -50,7 +58,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
   }, [isOpen]);
 
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative w-full">
       <div className="flex gap-2 items-center">
         <div className="flex-1 px-3 py-2.5 rounded-lg border-2 border-input bg-background/80 backdrop-blur text-foreground min-h-11 flex items-center overflow-x-auto transition-all hover:border-primary/50">
           {value || <span className="text-muted-foreground">{placeholder}</span>}
