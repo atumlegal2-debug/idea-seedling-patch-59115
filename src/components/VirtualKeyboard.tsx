@@ -76,7 +76,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
           
           {/* Keyboard */}
           <div className="fixed inset-x-0 bottom-0 z-50 animate-slide-in-bottom">
-            <div className="bg-gradient-to-b from-card/95 via-card to-card/98 backdrop-blur-xl border-t-4 border-primary/40 shadow-[0_-10px_50px_-10px_rgba(168,85,247,0.4)] p-4">
+            <div className="bg-gradient-to-b from-card/95 via-card to-card/98 backdrop-blur-xl border-t-4 border-primary/40 shadow-[0_-10px_50px_-10px_rgba(168,85,247,0.4)] p-4 pb-safe">
               {/* Header */}
               <div className="flex justify-between items-center mb-3 px-1">
                 <div className="flex items-center gap-2">
