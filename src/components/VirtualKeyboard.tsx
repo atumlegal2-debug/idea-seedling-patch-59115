@@ -6,10 +6,9 @@ interface VirtualKeyboardProps {
   onType: (value: string) => void;
   value: string;
   placeholder?: string;
-  onToggle?: (isOpen: boolean) => void;
 }
 
-const VirtualKeyboard = ({ onType, value, placeholder, onToggle }: VirtualKeyboardProps) => {
+const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpperCase, setIsUpperCase] = useState(false);
 
@@ -39,12 +38,6 @@ const VirtualKeyboard = ({ onType, value, placeholder, onToggle }: VirtualKeyboa
     onType('');
   };
 
-  const toggleKeyboard = () => {
-    const newIsOpen = !isOpen;
-    setIsOpen(newIsOpen);
-    onToggle?.(newIsOpen);
-  };
-
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -66,7 +59,7 @@ const VirtualKeyboard = ({ onType, value, placeholder, onToggle }: VirtualKeyboa
           type="button"
           variant="outline"
           size="icon"
-          onClick={toggleKeyboard}
+          onClick={() => setIsOpen(!isOpen)}
           className={`shrink-0 h-11 w-11 transition-all shadow-md ${isOpen ? 'bg-gradient-arcane text-white border-primary shadow-glow' : 'hover:border-primary/50'}`}
         >
           <Keyboard className="w-5 h-5" />
@@ -78,7 +71,7 @@ const VirtualKeyboard = ({ onType, value, placeholder, onToggle }: VirtualKeyboa
           {/* Overlay */}
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
-            onClick={toggleKeyboard}
+            onClick={() => setIsOpen(false)}
           />
           
           {/* Keyboard */}
@@ -94,7 +87,7 @@ const VirtualKeyboard = ({ onType, value, placeholder, onToggle }: VirtualKeyboa
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={toggleKeyboard}
+                  onClick={() => setIsOpen(false)}
                   className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive rounded-full"
                 >
                   <X className="w-4 h-4" />
