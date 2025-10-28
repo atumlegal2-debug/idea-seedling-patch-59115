@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
@@ -12,6 +11,7 @@ import earthIcon from "@/assets/earth-element.png";
 import airIcon from "@/assets/air-element.png";
 import { useUser, AppUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
+import { VirtualKeyboardInput } from "@/components/VirtualKeyboardInput";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -138,7 +138,7 @@ const Index = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-base font-heading">Nome de Usuário</Label>
-                <Input
+                <VirtualKeyboardInput
                   id="username"
                   type="text"
                   placeholder="Ana1313"
@@ -177,7 +177,7 @@ const Index = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-base font-heading">Nome Completo</Label>
-                <Input
+                <VirtualKeyboardInput
                   id="name"
                   type="text"
                   placeholder="Ana Silva"
@@ -189,7 +189,7 @@ const Index = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="new-username" className="text-base font-heading">Nome de Usuário</Label>
-                <Input
+                <VirtualKeyboardInput
                   id="new-username"
                   type="text"
                   placeholder="Ana1313"

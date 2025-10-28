@@ -164,3 +164,22 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-card);
   }
 }
+
+/* Custom styles for react-simple-keyboard */
+.my-keyboard.hg-theme-dark {
+  @apply bg-transparent;
+}
+.my-keyboard.hg-theme-dark .hg-button {
+  @apply bg-muted/50 border-b-4 border-border text-foreground h-14;
+  font-family: 'Cinzel', serif;
+  transition: all 0.1s ease-in-out;
+}
+.my-keyboard.hg-theme-dark .hg-button:active {
+  @apply bg-primary/50 scale-95;
+}
+.my-keyboard.hg-theme-dark .hg-button.hg-function {
+  @apply bg-primary/20;
+}
+.my-keyboard.hg-theme-dark .hg-button.hg-button-enter {
+  @apply bg-gradient-arcane text-primary-foreground;
+}
