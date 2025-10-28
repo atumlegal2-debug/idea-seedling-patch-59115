@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Medieval magical theme */
+    --background: 240 12% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 13%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 13%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263 85% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 45 100% 58%;
+    --secondary-foreground: 240 10% 10%;
+
+    --muted: 240 8% 22%;
+    --muted-foreground: 240 5% 68%;
+
+    --accent: 263 70% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 62%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 8% 28%;
+    --input: 240 8% 22%;
+    --ring: 263 85% 62%;
+
+    --radius: 0.85rem;
+
+    /* Element colors */
+    --water: 200 100% 50%;
+    --water-dark: 200 85% 38%;
+    --fire: 10 98% 62%;
+    --fire-dark: 10 92% 48%;
+    --earth: 120 58% 48%;
+    --earth-dark: 120 48% 35%;
+    --air: 190 85% 62%;
+    --air-dark: 190 70% 48%;
+
+    /* Gradients */
+    --gradient-arcane: linear-gradient(135deg, hsl(263 85% 62%) 0%, hsl(45 100% 58%) 100%);
+    --gradient-water: linear-gradient(135deg, hsl(var(--water)) 0%, hsl(var(--water-dark)) 100%);
+    --gradient-fire: linear-gradient(135deg, hsl(var(--fire)) 0%, hsl(var(--fire-dark)) 100%);
+    --gradient-earth: linear-gradient(135deg, hsl(var(--earth)) 0%, hsl(var(--earth-dark)) 100%);
+    --gradient-air: linear-gradient(135deg, hsl(var(--air)) 0%, hsl(var(--air-dark)) 100%);
+    
+    /* Shadows */
+    --shadow-glow: 0 0 30px hsl(263 85% 62% / 0.4), 0 0 60px hsl(263 85% 62% / 0.2);
+    --shadow-card: 0 8px 32px hsl(240 10% 3% / 0.5);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 240 12% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 13%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 13%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263 85% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 45 100% 58%;
+    --secondary-foreground: 240 10% 10%;
+
+    --muted: 240 8% 22%;
+    --muted-foreground: 240 5% 68%;
+
+    --accent: 263 70% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 62%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 8% 28%;
+    --input: 240 8% 22%;
+    --ring: 263 85% 62%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Crimson Text', serif;
+    background: linear-gradient(135deg, hsl(240 12% 8%), hsl(263 30% 12%));
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient-arcane {
+    background: var(--gradient-arcane);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .bg-gradient-arcane {
+    background: var(--gradient-arcane);
+  }
+
+  .bg-gradient-water {
+    background: var(--gradient-water);
+  }
+
+  .bg-gradient-fire {
+    background: var(--gradient-fire);
+  }
+
+  .bg-gradient-earth {
+    background: var(--gradient-earth);
+  }
+
+  .bg-gradient-air {
+    background: var(--gradient-air);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+}
