@@ -13,6 +13,7 @@ import ProfessorAtividades from "./pages/ProfessorAtividades";
 import ProfessorMissoes from "./pages/ProfessorMissoes";
 import ProfessorXP from "./pages/ProfessorXP";
 import ProfessorSubmissionReview from "./pages/ProfessorSubmissionReview";
+import ProfessorPoderes from "./pages/ProfessorPoderes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/professor/missoes" element={<ProfessorMissoes />} />
           <Route path="/professor/xp" element={<ProfessorXP />} />
           <Route path="/professor/submission/:submissionId" element={<ProfessorSubmissionReview />} />
+          <Route path="/professor/poderes" element={<ProfessorPoderes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

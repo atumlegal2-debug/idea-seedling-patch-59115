@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Target, Trophy, LogOut } from "lucide-react";
+import { BookOpen, Target, Trophy, LogOut, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const Professor = () => {
@@ -46,7 +46,7 @@ const Professor = () => {
         </div>
 
         {/* Grid Menu */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card 
             className="p-8 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
             onClick={() => navigate("/professor/atividades")}
@@ -83,6 +83,19 @@ const Professor = () => {
               </div>
               <h3 className="font-heading text-2xl font-bold">XP</h3>
               <p className="text-sm text-muted-foreground">Distribuir pontos de experiência</p>
+            </div>
+          </Card>
+
+          <Card 
+            className="p-8 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
+            onClick={() => navigate("/professor/poderes")}
+          >
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Sparkles className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="font-heading text-2xl font-bold">Poderes</h3>
+              <p className="text-sm text-muted-foreground">Consultar guias de elementos</p>
             </div>
           </Card>
         </div>
