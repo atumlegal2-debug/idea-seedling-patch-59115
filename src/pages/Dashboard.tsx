@@ -1,73 +1,80 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, Zap, Target, Trophy, LogOut, Camera } from "lucide-react";
 import { toast } from "sonner";
-
-interface User {
-  name: string;
-  username: string;
-  element: "água" | "terra" | "fogo" | "ar";
-  xp: number;
-  rank: string;
-  profilePicture: string | null;
-}
+import { useUser } from "@/contexts/UserContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout, loading, refreshUser } = useUser();
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    const userType = localStorage.getItem("userType");
-    
-    if (!currentUser || userType !== "student") {
+    if (!loading && !user) {
       navigate("/");
-      return;
     }
+  }, [user, loading, navigate]);
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userData = users.find((u: any) => u.username === currentUser);
-    
-    if (!userData) {
-      navigate("/");
-      return;
+  useEffect(() => {
+    if (user) {
+      const channel = supabase
+        .channel(`public:users:id=eq.${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
+          (payload) => {
+            console.log('User data changed!', payload);
+            toast.info("Seu perfil foi atualizado!");
+            refreshUser();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-
-    setUser(userData);
-  }, [navigate]);
+  }, [user, refreshUser]);
 
   const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("userType");
+    logout();
     navigate("/");
     toast.success("Até breve!");
   };
 
-  const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      
-      // Update user profile picture
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      const updatedUsers = users.map((u: any) => 
-        u.username === user?.username 
-          ? { ...u, profilePicture: imageUrl }
-          : u
-      );
-      
-      localStorage.setItem("users", JSON.stringify(updatedUsers));
-      setUser(prev => prev ? { ...prev, profilePicture: imageUrl } : null);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+
+    if (uploadError) {
+      toast.error("Erro ao enviar a foto.");
+      console.error(uploadError);
+      return;
+    }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const publicUrl = data.publicUrl;
+
+    const { error: updateUserError } = await supabase
+      .from('users')
+      .update({ photo_url: publicUrl })
+      .eq('id', user.id);
+
+    if (updateUserError) {
+      toast.error("Erro ao atualizar o perfil.");
+    } else {
+      refreshUser();
       toast.success("Foto de perfil atualizada!");
-    };
-    
-    reader.readAsDataURL(file);
+    }
   };
 
   const getElementEmoji = (element: string) => {
@@ -90,12 +97,11 @@ const Dashboard = () => {
     return gradients[element] || "";
   };
 
-  if (!user) return null;
+  if (loading || !user) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
 
   return (
     <div className="min-h-screen p-6 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* Header */}
         <div className="flex justify-between items-start">
           <div>
             <h1 className="font-heading text-4xl font-bold text-gradient-arcane mb-2">
@@ -113,7 +119,6 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Profile Card */}
         <Card className="p-6 shadow-card border-2 border-primary/20">
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -157,7 +162,6 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        {/* Grid Menu */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card 
             className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"

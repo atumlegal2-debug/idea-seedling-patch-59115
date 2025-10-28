@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 const powerData = {
   água: {
@@ -61,29 +62,23 @@ const powerData = {
 
 const Poderes = () => {
   const navigate = useNavigate();
-  const [userElement, setUserElement] = useState<"água" | "terra" | "fogo" | "ar">("água");
-  const [userRank, setUserRank] = useState("E");
+  const { user, loading } = useUser();
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userData = users.find((u: any) => u.username === currentUser);
-    
-    if (!userData) {
+    if (!loading && !user) {
       navigate("/");
-      return;
     }
+  }, [user, loading, navigate]);
 
-    setUserElement(userData.element);
-    setUserRank(userData.rank);
-  }, [navigate]);
+  if (loading || !user) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
-  const elementData = powerData[userElement];
+  const elementData = powerData[user.element];
 
   return (
     <div className="min-h-screen p-6 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
@@ -101,29 +96,27 @@ const Poderes = () => {
           </div>
         </div>
 
-        {/* Element Header */}
         <Card className={`p-8 ${elementData.gradient} border-none text-white shadow-glow`}>
           <div className="text-center space-y-4">
             <div className="text-6xl">{elementData.emoji}</div>
-            <h2 className="font-heading text-3xl font-bold capitalize">{userElement}</h2>
-            <p className="text-lg opacity-90">Rank Atual: {userRank}</p>
+            <h2 className="font-heading text-3xl font-bold capitalize">{user.element}</h2>
+            <p className="text-lg opacity-90">Rank Atual: {user.rank}</p>
           </div>
         </Card>
 
-        {/* Ranks */}
         <div className="space-y-4">
           {elementData.ranks.map((rankData) => (
             <Card 
               key={rankData.rank}
               className={`p-6 border-2 transition-all ${
-                rankData.rank === userRank 
+                rankData.rank === user.rank 
                   ? `${elementData.gradient} text-white border-white shadow-glow` 
                   : "border-border hover:border-primary/50"
               }`}
             >
               <div className="flex gap-4">
                 <div className={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center font-heading text-2xl font-bold ${
-                  rankData.rank === userRank 
+                  rankData.rank === user.rank 
                     ? "bg-white/20" 
                     : elementData.gradient + " text-white"
                 }`}>
@@ -132,12 +125,12 @@ const Poderes = () => {
                 <div className="flex-1">
                   <h3 className="font-heading text-xl font-bold mb-2">
                     Rank {rankData.rank}
-                    {rankData.rank === userRank && " (Você está aqui)"}
+                    {rankData.rank === user.rank && " (Você está aqui)"}
                   </h3>
-                  <p className={rankData.rank === userRank ? "opacity-90 mb-2" : "text-foreground mb-2"}>
+                  <p className={rankData.rank === user.rank ? "opacity-90 mb-2" : "text-foreground mb-2"}>
                     {rankData.description}
                   </p>
-                  <p className={`text-sm font-heading ${rankData.rank === userRank ? "opacity-80" : "text-muted-foreground"}`}>
+                  <p className={`text-sm font-heading ${rankData.rank === user.rank ? "opacity-80" : "text-muted-foreground"}`}>
                     {rankData.xpRequired === 0 ? "Inicial" : `Requer ${rankData.xpRequired} XP`}
                   </p>
                 </div>

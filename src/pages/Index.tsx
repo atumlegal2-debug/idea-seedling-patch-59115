@@ -1,110 +1,117 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import waterIcon from "@/assets/water-element.png";
 import fireIcon from "@/assets/fire-element.png";
 import earthIcon from "@/assets/earth-element.png";
 import airIcon from "@/assets/air-element.png";
+import { useUser, AppUser } from "@/contexts/UserContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, login, loading } = useUser();
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [saveLogin, setSaveLogin] = useState(false);
   
-  // Login state
   const [loginUsername, setLoginUsername] = useState("");
   
-  // Registration state
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [element, setElement] = useState<"água" | "terra" | "fogo" | "ar" | "">("");
 
-  const handleLogin = () => {
+  useEffect(() => {
+    if (user) {
+      navigate(user.isProfessor ? "/professor" : "/dashboard");
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async () => {
     if (!loginUsername.trim()) {
       toast.error("Por favor, insira seu nome de usuário");
       return;
     }
 
-    // Check if it's professor
     if (loginUsername === "Professor1812") {
-      if (saveLogin) {
-        localStorage.setItem("savedUser", loginUsername);
-        localStorage.setItem("userType", "professor");
-      }
-      localStorage.setItem("currentUser", loginUsername);
-      localStorage.setItem("userType", "professor");
+      const professorUser: AppUser = {
+        id: 'professor-id',
+        name: 'Professor',
+        username: 'Professor1812',
+        isProfessor: true,
+        element: 'fogo', xp: 9999, rank: 'SS', profilePicture: null
+      };
+      login(professorUser);
       navigate("/professor");
       return;
     }
 
-    // Check if user exists
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find((u: any) => u.username === loginUsername);
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', loginUsername)
+      .single();
 
-    if (!user) {
+    if (error || !data) {
       toast.error("Usuário não encontrado");
       return;
     }
-
-    if (saveLogin) {
-      localStorage.setItem("savedUser", loginUsername);
-      localStorage.setItem("userType", "student");
-    }
-    localStorage.setItem("currentUser", loginUsername);
-    localStorage.setItem("userType", "student");
+    
+    const appUser: AppUser = { ...data, isProfessor: false, profilePicture: data.photo_url };
+    login(appUser);
     navigate("/dashboard");
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!name.trim() || !username.trim() || !element) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
 
-    // Validate username format (name + 4 digits)
     const usernameRegex = /^[a-zA-Z]+\d{4}$/;
     if (!usernameRegex.test(username)) {
       toast.error("Nome de usuário deve ser um nome seguido de 4 dígitos (ex: Ana1313)");
       return;
     }
 
-    // Check if username already exists
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    if (users.find((u: any) => u.username === username)) {
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .single();
+
+    if (existingUser) {
       toast.error("Nome de usuário já existe");
       return;
     }
 
-    // Create new user
-    const newUser = {
-      name,
-      username,
-      element,
-      xp: 0,
-      rank: "E",
-      profilePicture: null,
-      completedActivities: [],
-      completedMissions: []
-    };
+    const { data: newUser, error } = await supabase
+      .from('users')
+      .insert({ name, username, element })
+      .select()
+      .single();
 
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-    localStorage.setItem("currentUser", username);
-    localStorage.setItem("userType", "student");
+    if (error || !newUser) {
+      toast.error("Erro ao criar conta.");
+      console.error(error);
+      return;
+    }
     
+    const appUser: AppUser = { ...newUser, isProfessor: false, profilePicture: newUser.photo_url };
+    login(appUser);
     toast.success("Conta criada com sucesso!");
     navigate("/dashboard");
   };
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
-      {/* Background */}
       <div 
         className="absolute inset-0 z-0"
         style={{
@@ -116,9 +123,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background/95" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 w-full max-w-md space-y-8">
-        {/* Logo/Title */}
         <div className="text-center space-y-2">
           <h1 className="font-heading text-5xl font-bold text-gradient-arcane mb-4 tracking-wide">
             Academia Arcana de Alvorada
@@ -128,10 +133,8 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Login/Register Card */}
         <Card className="p-8 shadow-card border-2 border-primary/20 bg-card/95 backdrop-blur-sm">
           {!isCreatingAccount ? (
-            // Login Form
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-base font-heading">Nome de Usuário</Label>
@@ -144,20 +147,6 @@ const Index = () => {
                   onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                   className="text-base"
                 />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="save-login" 
-                  checked={saveLogin}
-                  onCheckedChange={(checked) => setSaveLogin(checked as boolean)}
-                />
-                <Label 
-                  htmlFor="save-login" 
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Salvar login
-                </Label>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -178,17 +167,13 @@ const Index = () => {
 
               <Button 
                 variant="ghost"
-                onClick={() => {
-                  setLoginUsername("Professor1812");
-                  toast.info("Use: Professor1812");
-                }}
+                onClick={() => setLoginUsername("Professor1812")}
                 className="w-full text-secondary hover:text-secondary/80 hover:bg-secondary/10"
               >
                 Acesso Professor
               </Button>
             </div>
           ) : (
-            // Registration Form
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-base font-heading">Nome Completo</Label>

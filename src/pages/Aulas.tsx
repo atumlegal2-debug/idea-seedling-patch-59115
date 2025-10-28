@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useUser } from "@/contexts/UserContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Statement {
   id: string;
@@ -27,78 +29,91 @@ interface Activity {
   title: string;
   text: string;
   questions: Question[];
-  xpReward: number;
+  xp_reward: number;
 }
 
 const Aulas = () => {
   const navigate = useNavigate();
+  const { user, loading } = useUser();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [answers, setAnswers] = useState<Record<string, string | Record<string, boolean>>>({});
-  const [completedActivities, setCompletedActivities] = useState<string[]>([]);
-  const [username, setUsername] = useState("");
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    const userType = localStorage.getItem("userType");
-    
-    if (!currentUser || userType !== "student") {
+    if (!loading && (!user || user.isProfessor)) {
       navigate("/");
-      return;
     }
+  }, [user, loading, navigate]);
 
-    setUsername(currentUser);
+  const fetchData = useCallback(async () => {
+    if (!user) return;
 
-    // Load activities
-    const storedActivities = JSON.parse(localStorage.getItem("activities") || "[]");
-    setActivities(storedActivities);
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .select('*');
+    if (activitiesError) toast.error("Erro ao carregar atividades.");
+    else setActivities(activitiesData || []);
 
-    // Load completed activities for this user
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userData = users.find((u: any) => u.username === currentUser);
-    setCompletedActivities(userData?.completedActivities || []);
-  }, [navigate]);
+    const { data: submissionsData, error: submissionsError } = await supabase
+      .from('activity_submissions')
+      .select('*')
+      .eq('student_id', user.id);
+    if (submissionsError) toast.error("Erro ao carregar seu progresso.");
+    else setSubmissions(submissionsData || []);
+  }, [user]);
 
-  const handleSubmit = () => {
-    if (!selectedActivity) return;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-    // Check if all questions are answered
-    const allAnswered = selectedActivity.questions.every(q => answers[q.id]);
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`public:activity_submissions:student_id=eq.${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'activity_submissions', filter: `student_id=eq.${user.id}` },
+        (payload) => {
+          toast.success("Sua atividade foi corrigida!");
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchData]);
+
+  const handleSubmit = async () => {
+    if (!selectedActivity || !user) return;
+
+    const allAnswered = selectedActivity.questions.every(q => answers[q.id] !== undefined);
     if (!allAnswered) {
       toast.error("Por favor, responda todas as perguntas");
       return;
     }
 
-    // Calculate score
-    let correctCount = 0;
-    selectedActivity.questions.forEach(q => {
-      if (q.type === "multiple" && answers[q.id] === q.correctAnswer) {
-        correctCount++;
-      } else if (q.type === "true-false" && q.statements) {
-        const userAnswers = answers[q.id] as Record<string, boolean>;
-        const allCorrect = q.statements.every(stmt => userAnswers?.[stmt.id] === stmt.isTrue);
-        if (allCorrect) correctCount++;
-      }
+    const { error } = await supabase.from('activity_submissions').insert({
+      activity_id: selectedActivity.id,
+      student_id: user.id,
+      answers: answers,
     });
 
-    const score = (correctCount / selectedActivity.questions.length) * 100;
-
-    // Update user data
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userIndex = users.findIndex((u: any) => u.username === username);
-    
-    if (userIndex !== -1) {
-      if (!users[userIndex].completedActivities.includes(selectedActivity.id)) {
-        users[userIndex].completedActivities.push(selectedActivity.id);
-        users[userIndex].xp += selectedActivity.xpReward;
-        localStorage.setItem("users", JSON.stringify(users));
-        setCompletedActivities([...completedActivities, selectedActivity.id]);
+    if (error) {
+      if (error.code === '23505') { // unique constraint violation
+        toast.error("Você já enviou respostas para esta atividade.");
+      } else {
+        toast.error("Erro ao enviar respostas.");
+        console.error(error);
       }
+    } else {
+      toast.success("Respostas enviadas! Aguardando correção do professor.");
+      fetchData();
+      setSelectedActivity(null);
+      setAnswers({});
     }
-
-    toast.success(`Pontuação: ${score.toFixed(0)}%! Você ganhou ${selectedActivity.xpReward} XP!`);
-    setSelectedActivity(null);
-    setAnswers({});
   };
 
   if (selectedActivity) {
@@ -215,17 +230,20 @@ const Aulas = () => {
         ) : (
           <div className="space-y-4">
             {activities.map((activity) => {
-              const isCompleted = completedActivities.includes(activity.id);
+              const submission = submissions.find(s => s.activity_id === activity.id);
+              const status = submission?.status; // 'pending' or 'graded'
               
               return (
                 <Card 
                   key={activity.id}
-                  className={`p-6 cursor-pointer transition-all border-2 bg-card/80 backdrop-blur ${
-                    isCompleted 
+                  className={`p-6 transition-all border-2 bg-card/80 backdrop-blur ${
+                    status === 'graded'
                       ? "border-green-500/50 bg-green-950/30" 
-                      : "border-primary/30 hover:border-primary/50 hover:shadow-glow"
+                      : status === 'pending'
+                      ? "border-yellow-500/50 bg-yellow-950/30"
+                      : "cursor-pointer border-primary/30 hover:border-primary/50 hover:shadow-glow"
                   }`}
-                  onClick={() => !isCompleted && setSelectedActivity(activity)}
+                  onClick={() => !status && setSelectedActivity(activity)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -233,15 +251,24 @@ const Aulas = () => {
                       <p className="text-muted-foreground line-clamp-2 mb-3">{activity.text}</p>
                       <div className="flex gap-3 text-sm">
                         <span className="px-3 py-1 rounded-full bg-gradient-arcane text-white">
-                          {activity.xpReward} XP
+                          {activity.xp_reward} XP
                         </span>
                         <span className="px-3 py-1 rounded-full bg-muted">
                           {activity.questions.length} {activity.questions.length === 1 ? "pergunta" : "perguntas"}
                         </span>
                       </div>
                     </div>
-                    {isCompleted && (
-                      <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0" />
+                    {status === 'graded' && (
+                      <div className="text-right">
+                        <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0" />
+                        <p className="text-sm text-green-400 mt-1">Nota: {submission.score}/10</p>
+                      </div>
+                    )}
+                    {status === 'pending' && (
+                      <div className="text-right">
+                        <Clock className="w-8 h-8 text-yellow-500 flex-shrink-0" />
+                        <p className="text-sm text-yellow-400 mt-1">Aguardando</p>
+                      </div>
                     )}
                   </div>
                 </Card>
