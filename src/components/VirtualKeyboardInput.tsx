@@ -17,21 +17,18 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
     const [isOpen, setIsOpen] = useState(false);
     const isMobile = useIsMobile();
 
+    const handleKeyPress = (button: string) => {
+      if (button === "{enter}") {
+        setIsOpen(false);
+      }
+    };
+
     const handleChange = (input: string) => {
       if (props.onChange) {
         const event = {
           target: { value: input }
         } as React.ChangeEvent<HTMLInputElement>;
         props.onChange(event);
-      }
-    };
-
-    const handleKeyPress = (button: string) => {
-      if (button === "{enter}") {
-        setIsOpen(false);
-      }
-      if (button === "{clear}") {
-        handleChange(""); // Clear the input
       }
     };
 
@@ -50,14 +47,14 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
               "{tab} q w e r t y u i o p [ ] \\",
               "{lock} a s d f g h j k l ç ; ´ {enter}",
               "{shift} z x c v b n m , . / {shift}",
-              "{clear} {space}",
+              "{space}",
             ],
             shift: [
               "\" ! @ # $ % ¨ & * ( ) _ + {bksp}",
               "{tab} Q W E R T Y U I O P { } |",
               "{lock} A S D F G H J K L Ç : ` {enter}",
               "{shift} Z X C V B N M < > ? {shift}",
-              "{clear} {space}",
+              "{space}",
             ],
           }}
           display={{
@@ -67,14 +64,7 @@ const VirtualKeyboardInput = forwardRef<HTMLInputElement, VirtualKeyboardInputPr
             "{lock}": "⇪",
             "{tab}": "⇥",
             "{space}": " ",
-            "{clear}": "Limpar Tudo",
           }}
-          buttonTheme={[
-            {
-              class: "hg-button-clear",
-              buttons: "{clear}"
-            }
-          ]}
           inputName={props.id || "virtual-input"}
           value={props.value as string}
         />
