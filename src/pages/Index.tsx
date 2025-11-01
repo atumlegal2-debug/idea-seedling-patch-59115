@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import waterIcon from "@/assets/water-element.png";
@@ -12,6 +13,17 @@ import airIcon from "@/assets/air-element.png";
 import { useUser, AppUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import VirtualKeyboard from "@/components/VirtualKeyboard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,6 +35,9 @@ const Index = () => {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [element, setElement] = useState<"água" | "terra" | "fogo" | "ar" | "">("");
+  
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,11 +61,10 @@ const Index = () => {
         .single();
 
       if (!professorData) {
-        // First time login for this professor, create an account
         const { data: newProfessor, error: insertError } = await supabase
           .from('users')
           .insert({
-            name: loginUsername.replace(/\d+$/, ''), // 'Wooy1234' -> 'Wooy'
+            name: loginUsername.replace(/\d+$/, ''),
             username: loginUsername,
             is_professor: true,
           })
@@ -129,6 +143,18 @@ const Index = () => {
     navigate("/dashboard");
   };
 
+  const handleAdminLogin = () => {
+    if (adminPassword === "88620787") {
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
+      navigate('/admin/users');
+      toast.success("Acesso concedido.");
+    } else {
+      toast.error("Senha incorreta.");
+    }
+    setIsAlertOpen(false);
+    setAdminPassword("");
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
@@ -182,6 +208,32 @@ const Index = () => {
                 >
                   Criar Conta
                 </Button>
+              </div>
+              <div className="text-center">
+                <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="link" className="text-muted-foreground text-xs h-auto p-1">Secreto</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Acesso Secreto</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Insira a senha de administrador para continuar.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <Input 
+                      type="password"
+                      placeholder="********"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                    />
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleAdminLogin}>Entrar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ) : (

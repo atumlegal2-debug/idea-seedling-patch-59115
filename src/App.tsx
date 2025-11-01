@@ -17,6 +17,7 @@ import ProfessorPoderes from "./pages/ProfessorPoderes";
 import ProfessorEditProfile from "./pages/ProfessorEditProfile";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminUsers from "./pages/AdminUsers";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,9 @@ const App = () => (
             <Route path="/professor/perfil" element={<ProfessorEditProfile />} />
           </Route>
           
+          {/* Admin Route */}
+          <Route path="/admin/users" element={<AdminUsers />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
