@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Zap, Target, Trophy, LogOut, Camera } from "lucide-react";
+import { BookOpen, Zap, Target, Trophy, LogOut, Camera, Map } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,6 +185,19 @@ const Dashboard = () => {
 
           <Card 
             className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
+            onClick={() => navigate("/locais")}
+          >
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Map className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-heading text-xl font-bold">Locais</h3>
+              <p className="text-sm text-muted-foreground">Converse com amigos</p>
+            </div>
+          </Card>
+
+          <Card 
+            className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
             onClick={() => navigate("/missoes")}
           >
             <div className="text-center space-y-3">
@@ -193,19 +206,6 @@ const Dashboard = () => {
               </div>
               <h3 className="font-heading text-xl font-bold">Missões</h3>
               <p className="text-sm text-muted-foreground">Complete tarefas</p>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
-            onClick={() => toast.info("Sistema de XP em breve!")}
-          >
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-destructive to-destructive/70 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Trophy className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-heading text-xl font-bold">XP</h3>
-              <p className="text-sm text-muted-foreground">Seu progresso</p>
             </div>
           </Card>
         </div>

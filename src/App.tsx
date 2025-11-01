@@ -18,6 +18,8 @@ import ProfessorEditProfile from "./pages/ProfessorEditProfile";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminUsers from "./pages/AdminUsers";
+import Locations from "./pages/Locations";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/poderes" element={<Poderes />} />
             <Route path="/aulas" element={<Aulas />} />
             <Route path="/missoes" element={<Missoes />} />
+            <Route path="/locais" element={<Locations />} />
+            <Route path="/chat/:locationId" element={<Chat />} />
           </Route>
 
           {/* Professor Routes */}
