@@ -141,8 +141,8 @@ const Chat = () => {
                   </div>
                   {msg.user_id === user?.id && (
                     <Avatar className="w-10 h-10 border-2 border-secondary">
-                      <AvatarImage src={msg.users.photo_url || undefined} />
-                      <AvatarFallback>{msg.users.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user?.profilePicture || undefined} />
+                      <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                   )}
                 </div>

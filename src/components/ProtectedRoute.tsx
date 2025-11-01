@@ -5,7 +5,7 @@ interface ProtectedRouteProps {
   isProfessorRoute?: boolean;
 }
 
-const ProtectedRoute = ({ isProfessorRoute = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ isProfessorRoute }: ProtectedRouteProps) => {
   const { user, loading } = useUser();
 
   if (loading) {
@@ -25,16 +25,18 @@ const ProtectedRoute = ({ isProfessorRoute = false }: ProtectedRouteProps) => {
     return <Navigate to="/" replace />;
   }
 
-  if (isProfessorRoute && !user.isProfessor) {
+  // If isProfessorRoute is defined, we do a role check
+  if (isProfessorRoute === true && !user.isProfessor) {
     // Student trying to access professor route
     return <Navigate to="/dashboard" replace />;
   }
   
-  if (!isProfessorRoute && user.isProfessor) {
+  if (isProfessorRoute === false && user.isProfessor) {
     // Professor trying to access student route
     return <Navigate to="/professor" replace />;
   }
 
+  // If isProfessorRoute is undefined, it's a shared route, so we just render Outlet
   return <Outlet />;
 };
 

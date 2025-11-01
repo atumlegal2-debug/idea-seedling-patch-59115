@@ -38,8 +38,6 @@ const App = () => (
             <Route path="/poderes" element={<Poderes />} />
             <Route path="/aulas" element={<Aulas />} />
             <Route path="/missoes" element={<Missoes />} />
-            <Route path="/locais" element={<Locations />} />
-            <Route path="/chat/:locationId" element={<Chat />} />
           </Route>
 
           {/* Professor Routes */}
@@ -53,6 +51,12 @@ const App = () => (
             <Route path="/professor/perfil" element={<ProfessorEditProfile />} />
           </Route>
           
+          {/* Shared Authenticated Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/locais" element={<Locations />} />
+            <Route path="/chat/:locationId" element={<Chat />} />
+          </Route>
+
           {/* Admin Route */}
           <Route path="/admin/users" element={<AdminUsers />} />
 

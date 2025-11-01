@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Target, Trophy, LogOut, Sparkles, Edit } from "lucide-react";
+import { BookOpen, Target, Trophy, LogOut, Sparkles, Edit, Map } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -110,6 +110,19 @@ const Professor = () => {
             </div>
           </Card>
           
+          <Card 
+            className="p-8 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
+            onClick={() => navigate("/locais")}
+          >
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Map className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="font-heading text-2xl font-bold">Locais</h3>
+              <p className="text-sm text-muted-foreground">Converse com os alunos</p>
+            </div>
+          </Card>
+
           <Card 
             className="p-8 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
             onClick={() => navigate("/professor/perfil")}
