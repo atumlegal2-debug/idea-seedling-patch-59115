@@ -118,8 +118,8 @@ const Dashboard = () => {
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-primary shadow-glow">
                 <AvatarImage src={user.profilePicture || undefined} />
-                <AvatarFallback className={`${getElementGradient(user.element)} text-white text-2xl font-heading`}>
-                  {getElementEmoji(user.element)}
+                <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>
+                  {user.element ? getElementEmoji(user.element) : '?'}
                 </AvatarFallback>
               </Avatar>
               <label 
@@ -141,8 +141,8 @@ const Dashboard = () => {
               <h2 className="font-heading text-2xl font-bold mb-1">{user.name}</h2>
               <p className="text-muted-foreground mb-3">@{user.username}</p>
               <div className="flex gap-4 text-sm">
-                <div className={`px-4 py-2 rounded-lg ${getElementGradient(user.element)} text-white font-heading`}>
-                  {getElementEmoji(user.element)} {user.element.charAt(0).toUpperCase() + user.element.slice(1)}
+                <div className={`px-4 py-2 rounded-lg ${getElementGradient(user.element || '')} text-white font-heading`}>
+                  {user.element ? `${getElementEmoji(user.element)} ${user.element.charAt(0).toUpperCase() + user.element.slice(1)}` : 'Sem Elemento'}
                 </div>
                 <div className="px-4 py-2 rounded-lg bg-gradient-arcane text-white font-heading">
                   Rank {user.rank}
@@ -175,7 +175,7 @@ const Dashboard = () => {
             onClick={() => navigate("/poderes")}
           >
             <div className="text-center space-y-3">
-              <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element)} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
+              <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element || '')} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <h3 className="font-heading text-xl font-bold">Poderes</h3>

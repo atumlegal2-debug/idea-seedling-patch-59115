@@ -14,7 +14,7 @@ interface Student {
   id: string;
   name: string;
   username: string;
-  element: "água" | "terra" | "fogo" | "ar";
+  element: "água" | "terra" | "fogo" | "ar" | null;
   xp: number;
   rank: string;
   photo_url: string | null;
@@ -103,13 +103,15 @@ const ProfessorXP = () => {
                   <div className="flex items-center gap-4 flex-1">
                     <Avatar className="w-16 h-16 border-4 border-primary shadow-glow">
                       <AvatarImage src={user.photo_url || undefined} />
-                      <AvatarFallback className={`${getElementGradient(user.element)} text-white text-2xl font-heading`}>{getElementEmoji(user.element)}</AvatarFallback>
+                      <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>{user.element ? getElementEmoji(user.element) : '?'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-heading text-xl font-bold">{user.name}</h3>
                       <p className="text-sm text-muted-foreground mb-2">@{user.username}</p>
                       <div className="flex gap-2 flex-wrap">
-                        <span className={`px-3 py-1 rounded-full ${getElementGradient(user.element)} text-white text-sm font-heading`}>{getElementEmoji(user.element)} {user.element.charAt(0).toUpperCase() + user.element.slice(1)}</span>
+                        <span className={`px-3 py-1 rounded-full ${getElementGradient(user.element || '')} text-white text-sm font-heading`}>
+                          {user.element ? `${getElementEmoji(user.element)} ${user.element.charAt(0).toUpperCase() + user.element.slice(1)}` : 'Sem Elemento'}
+                        </span>
                         <span className="px-3 py-1 rounded-full bg-gradient-arcane text-white text-sm font-heading">Rank {user.rank}</span>
                         <span className="px-3 py-1 rounded-full border-2 border-secondary bg-card text-sm font-heading">{user.xp} XP</span>
                       </div>

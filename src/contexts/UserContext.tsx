@@ -6,7 +6,7 @@ export interface AppUser {
   id: string;
   name: string;
   username: string;
-  element: "água" | "terra" | "fogo" | "ar";
+  element: "água" | "terra" | "fogo" | "ar" | null;
   xp: number;
   rank: string;
   profilePicture: string | null;

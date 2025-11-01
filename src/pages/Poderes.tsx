@@ -65,6 +65,35 @@ const Poderes = () => {
 
   if (!user) return null; // ProtectedRoute handles this
 
+  if (!user.element) {
+    return (
+      <div className="min-h-screen p-6 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/dashboard")}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="font-heading text-4xl font-bold text-gradient-arcane">
+                Poderes do Elemento
+              </h1>
+              <p className="text-muted-foreground mt-1">Seu caminho elemental</p>
+            </div>
+          </div>
+          <Card className="p-12 text-center">
+            <h2 className="font-heading text-2xl font-bold mb-4">Elemento não definido</h2>
+            <p className="text-muted-foreground">Você ainda não tem um elemento. Complete as missões iniciais para descobrir o seu!</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const elementData = powerData[user.element];
 
   return (
