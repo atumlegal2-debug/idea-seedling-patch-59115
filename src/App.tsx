@@ -14,6 +14,7 @@ import ProfessorMissoes from "./pages/ProfessorMissoes";
 import ProfessorXP from "./pages/ProfessorXP";
 import ProfessorSubmissionReview from "./pages/ProfessorSubmissionReview";
 import ProfessorPoderes from "./pages/ProfessorPoderes";
+import ProfessorEditProfile from "./pages/ProfessorEditProfile";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/professor/xp" element={<ProfessorXP />} />
             <Route path="/professor/submission/:submissionId" element={<ProfessorSubmissionReview />} />
             <Route path="/professor/poderes" element={<ProfessorPoderes />} />
+            <Route path="/professor/perfil" element={<ProfessorEditProfile />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />

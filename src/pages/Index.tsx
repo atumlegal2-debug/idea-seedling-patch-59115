@@ -36,15 +36,37 @@ const Index = () => {
       return;
     }
 
-    if (loginUsername === "Professor1812") {
-      const professorUser: AppUser = {
-        id: 'professor-id',
-        name: 'Professor',
-        username: 'Professor1812',
-        isProfessor: true,
-        element: 'fogo', xp: 9999, rank: 'SS', profilePicture: null
-      };
-      login(professorUser);
+    const professorUsernames = ["Professor1812", "Wooy1234", "Niki1234", "Romeo1234"];
+
+    if (professorUsernames.includes(loginUsername)) {
+      let { data: professorData, error: professorError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', loginUsername)
+        .single();
+
+      if (!professorData) {
+        // First time login for this professor, create an account
+        const { data: newProfessor, error: insertError } = await supabase
+          .from('users')
+          .insert({
+            name: loginUsername.replace(/\d+$/, ''), // 'Wooy1234' -> 'Wooy'
+            username: loginUsername,
+            is_professor: true,
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          toast.error("Erro ao criar conta de professor.");
+          console.error(insertError);
+          return;
+        }
+        professorData = newProfessor;
+      }
+      
+      const appUser: AppUser = { ...professorData, isProfessor: true, profilePicture: professorData.photo_url };
+      login(appUser);
       navigate("/professor");
       return;
     }
@@ -53,6 +75,7 @@ const Index = () => {
       .from('users')
       .select('*')
       .eq('username', loginUsername)
+      .eq('is_professor', false)
       .single();
 
     if (error || !data) {
@@ -90,7 +113,7 @@ const Index = () => {
 
     const { data: newUser, error } = await supabase
       .from('users')
-      .insert({ name, username, element })
+      .insert({ name, username, element, is_professor: false })
       .select()
       .single();
 
@@ -160,14 +183,6 @@ const Index = () => {
                   Criar Conta
                 </Button>
               </div>
-
-              <Button 
-                variant="ghost"
-                onClick={() => setLoginUsername("Professor1812")}
-                className="w-full text-secondary hover:text-secondary/80 hover:bg-secondary/10"
-              >
-                Acesso Professor
-              </Button>
             </div>
           ) : (
             <div className="space-y-6">
