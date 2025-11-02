@@ -13,6 +13,8 @@ import airIcon from "@/assets/air-element.png";
 import { useUser, AppUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import VirtualKeyboard from "@/components/VirtualKeyboard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +27,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+interface SavedProfile {
+  username: string;
+  name: string;
+  profilePicture: string | null;
+  isProfessor: boolean;
+  element: "água" | "terra" | "fogo" | "ar" | null;
+}
+
 const Index = () => {
   const navigate = useNavigate();
-  const { user, login, loading } = useUser();
+  const { user, login, loading, removeProfile } = useUser();
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   
   const [loginUsername, setLoginUsername] = useState("");
@@ -39,67 +49,43 @@ const Index = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
+  const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>([]);
+  const [showLoginForm, setShowLoginForm] = useState(false);
+
+  useEffect(() => {
+    const profiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
+    setSavedProfiles(profiles);
+    if (profiles.length === 0) {
+      setShowLoginForm(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
       navigate(user.isProfessor ? "/professor" : "/dashboard");
     }
   }, [user, navigate]);
 
-  const handleLogin = async () => {
-    if (!loginUsername.trim()) {
+  const performLogin = async (usernameToLogin: string) => {
+    if (!usernameToLogin.trim()) {
       toast.error("Por favor, insira seu nome de usuário");
-      return;
-    }
-
-    const professorUsernames = ["Professor1812", "Wooy1234", "Niki1234", "Romeo1234"];
-
-    if (professorUsernames.includes(loginUsername)) {
-      let { data: professorData, error: professorError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', loginUsername)
-        .single();
-
-      if (!professorData) {
-        const { data: newProfessor, error: insertError } = await supabase
-          .from('users')
-          .insert({
-            name: loginUsername.replace(/\d+$/, ''),
-            username: loginUsername,
-            is_professor: true,
-          })
-          .select()
-          .single();
-        
-        if (insertError) {
-          toast.error("Erro ao criar conta de professor.");
-          console.error(insertError);
-          return;
-        }
-        professorData = newProfessor;
-      }
-      
-      const appUser: AppUser = { ...professorData, isProfessor: true, profilePicture: professorData.photo_url };
-      login(appUser);
-      navigate("/professor");
       return;
     }
 
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('username', loginUsername)
-      .eq('is_professor', false)
+      .eq('username', usernameToLogin)
       .single();
 
     if (error || !data) {
-      toast.error("Usuário não encontrado");
+      toast.error("Usuário não encontrado ou senha incorreta.");
       return;
     }
     
-    const appUser: AppUser = { ...data, isProfessor: false, profilePicture: data.photo_url };
+    const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url };
     login(appUser);
-    navigate("/dashboard");
+    navigate(appUser.isProfessor ? "/professor" : "/dashboard");
   };
 
   const handleCreateAccount = async () => {
@@ -155,6 +141,18 @@ const Index = () => {
     setAdminPassword("");
   };
 
+  const handleRemoveProfile = (usernameToRemove: string) => {
+    removeProfile(usernameToRemove);
+    const updatedProfiles = savedProfiles.filter(p => p.username !== usernameToRemove);
+    setSavedProfiles(updatedProfiles);
+    if (updatedProfiles.length === 0) {
+      setShowLoginForm(true);
+    }
+    toast.info("Perfil removido.");
+  };
+
+  const getElementEmoji = (element: string | null) => ({ água: "🌊", fogo: "🔥", terra: "🌱", ar: "💨" }[element || ''] || "?");
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
@@ -183,7 +181,38 @@ const Index = () => {
         </div>
 
         <Card className="p-8 shadow-card border-2 border-primary/20 bg-card/95 backdrop-blur-sm">
-          {!isCreatingAccount ? (
+          {!showLoginForm && savedProfiles.length > 0 ? (
+            <div className="space-y-4">
+              <h2 className="text-center font-heading text-2xl text-gradient-arcane">Acessar Perfil</h2>
+              {savedProfiles.map(profile => (
+                <div key={profile.username} className="p-3 rounded-lg bg-muted/30 flex items-center justify-between group">
+                  <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={() => performLogin(profile.username)}>
+                    <Avatar className="w-12 h-12 border-2 border-primary/50">
+                      <AvatarImage src={profile.profilePicture || undefined} className="object-cover" />
+                      <AvatarFallback>{getElementEmoji(profile.element)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-bold font-heading">{profile.name}</p>
+                      <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveProfile(profile.username)}>
+                    <X className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setIsCreatingAccount(false);
+                  setShowLoginForm(true);
+                }}
+                className="w-full border-primary/50 hover:bg-primary/10 mt-4"
+              >
+                Entrar com outra conta
+              </Button>
+            </div>
+          ) : !isCreatingAccount ? (
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-base font-heading">Nome de Usuário</Label>
@@ -196,7 +225,7 @@ const Index = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <Button 
-                  onClick={handleLogin}
+                  onClick={() => performLogin(loginUsername)}
                   className="w-full bg-gradient-arcane hover:opacity-90 transition-opacity shadow-glow"
                 >
                   Entrar
@@ -209,6 +238,11 @@ const Index = () => {
                   Criar Conta
                 </Button>
               </div>
+              {savedProfiles.length > 0 && (
+                <Button variant="link" className="w-full h-auto p-1 text-sm" onClick={() => setShowLoginForm(false)}>
+                  Voltar para seleção de perfis
+                </Button>
+              )}
               <div className="text-center">
                 <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
                   <AlertDialogTrigger asChild>

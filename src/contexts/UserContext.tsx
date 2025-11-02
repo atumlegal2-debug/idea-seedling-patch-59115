@@ -1,6 +1,5 @@
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
 
 export interface AppUser {
   id: string;
@@ -13,12 +12,21 @@ export interface AppUser {
   isProfessor: boolean;
 }
 
+interface SavedProfile {
+  username: string;
+  name: string;
+  profilePicture: string | null;
+  isProfessor: boolean;
+  element: "água" | "terra" | "fogo" | "ar" | null;
+}
+
 interface UserContextType {
   user: AppUser | null;
   loading: boolean;
   login: (user: AppUser) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  removeProfile: (username: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -28,57 +36,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUsername = localStorage.getItem("savedUser");
-    if (savedUsername) {
-      fetchUser(savedUsername);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchUser = async (username: string) => {
-    setLoading(true);
-    if (username === "Professor1812") {
-        const professorUser: AppUser = {
-            id: 'professor-id',
-            name: 'Professor',
-            username: 'Professor1812',
-            isProfessor: true,
-            element: 'fogo', // Placeholder
-            xp: 9999, // Placeholder
-            rank: 'SS', // Placeholder
-            profilePicture: null
-        };
-        setUser(professorUser);
-        localStorage.setItem("savedUser", username);
-    } else {
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('username', username)
-            .single();
-
-        if (data && !error) {
-            const appUser: AppUser = { ...data, isProfessor: false, profilePicture: data.photo_url };
-            setUser(appUser);
-            localStorage.setItem("savedUser", username);
-        } else {
-            console.error("Error fetching user:", error);
-            logout();
-        }
-    }
+    // We no longer auto-login, just finish the loading state.
     setLoading(false);
-  };
+  }, []);
   
   const refreshUser = async () => {
-    if (user && !user.isProfessor) {
+    if (user) {
         const { data, error } = await supabase
             .from('users')
             .select('*')
             .eq('id', user.id)
             .single();
         if (data && !error) {
-            const appUser: AppUser = { ...data, isProfessor: false, profilePicture: data.photo_url };
+            const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url };
             setUser(appUser);
         }
     }
@@ -86,16 +56,35 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (userToLogin: AppUser) => {
     setUser(userToLogin);
-    localStorage.setItem("savedUser", userToLogin.username);
+    const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
+    const profileToSave = {
+        username: userToLogin.username,
+        name: userToLogin.name,
+        profilePicture: userToLogin.profilePicture,
+        isProfessor: userToLogin.isProfessor,
+        element: userToLogin.element,
+    };
+    const existingProfileIndex = savedProfiles.findIndex(p => p.username === userToLogin.username);
+    if (existingProfileIndex > -1) {
+        savedProfiles[existingProfileIndex] = profileToSave;
+    } else {
+        savedProfiles.push(profileToSave);
+    }
+    localStorage.setItem("savedProfiles", JSON.stringify(savedProfiles));
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("savedUser");
+  };
+
+  const removeProfile = (username: string) => {
+    const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
+    const updatedProfiles = savedProfiles.filter(p => p.username !== username);
+    localStorage.setItem("savedProfiles", JSON.stringify(updatedProfiles));
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <UserContext.Provider value={{ user, loading, login, logout, refreshUser, removeProfile }}>
       {children}
     </UserContext.Provider>
   );
