@@ -7,6 +7,18 @@ import { BookOpen, Zap, Target, Trophy, LogOut, Camera, Map, Save, X } from "luc
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +27,8 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [locationPassword, setLocationPassword] = useState("");
+  const [isLocationAlertOpen, setIsLocationAlertOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -34,7 +48,6 @@ const Dashboard = () => {
 
       return () => {
         supabase.removeChannel(channel);
-        // Clean up temporary URL
         if (tempAvatarUrl) {
           URL.revokeObjectURL(tempAvatarUrl);
         }
@@ -52,21 +65,17 @@ const Dashboard = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error("Por favor, selecione um arquivo de imagem válido.");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("A imagem deve ter menos de 5MB.");
       return;
     }
 
     setUploading(true);
-    
-    // Create a temporary URL for preview
     const tempUrl = URL.createObjectURL(file);
     setTempAvatarUrl(tempUrl);
     
@@ -74,17 +83,12 @@ const Dashboard = () => {
     const fileName = `${user.id}.${fileExt}`;
 
     try {
-      // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { 
-          upsert: true,
-          cacheControl: '3600'
-        });
+        .upload(fileName, file, { upsert: true, cacheControl: '3600' });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL with timestamp to avoid caching
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
       const urlWithTimestamp = `${data.publicUrl}?t=${Date.now()}`;
       setAvatarUrl(urlWithTimestamp);
@@ -94,7 +98,6 @@ const Dashboard = () => {
       console.error("Erro no upload:", error);
       toast.error(`Erro ao enviar a foto: ${error.message || "Tente novamente"}`);
       setTempAvatarUrl(null);
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -109,7 +112,7 @@ const Dashboard = () => {
     try {
       const { error: updateUserError } = await supabase
         .from('users')
-        .update({ photo_url: avatarUrl.split('?')[0] }) // Remove timestamp for storage
+        .update({ photo_url: avatarUrl.split('?')[0] })
         .eq('id', user.id);
 
       if (updateUserError) throw updateUserError;
@@ -118,7 +121,6 @@ const Dashboard = () => {
       setTempAvatarUrl(null);
       toast.success("Foto de perfil atualizada!");
       
-      // Clean up temporary URL
       if (tempAvatarUrl) {
         URL.revokeObjectURL(tempAvatarUrl);
       }
@@ -132,40 +134,32 @@ const Dashboard = () => {
     setAvatarUrl(user?.profilePicture || null);
     setTempAvatarUrl(null);
     
-    // Clean up temporary URL
     if (tempAvatarUrl) {
       URL.revokeObjectURL(tempAvatarUrl);
     }
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const getElementEmoji = (element: string) => {
-    const emojis: Record<string, string> = {
-      água: "🌊",
-      fogo: "🔥",
-      terra: "🌱",
-      ar: "💨"
-    };
-    return emojis[element] || "";
+  const handleLocationAccess = () => {
+    if (locationPassword === "88620787") {
+      sessionStorage.setItem('isLocationAuthenticated', 'true');
+      navigate('/locais');
+      toast.success("Acesso concedido.");
+    } else {
+      toast.error("Senha incorreta.");
+    }
+    setIsLocationAlertOpen(false);
+    setLocationPassword("");
   };
 
-  const getElementGradient = (element: string) => {
-    const gradients: Record<string, string> = {
-      água: "bg-gradient-water",
-      fogo: "bg-gradient-fire",
-      terra: "bg-gradient-earth",
-      ar: "bg-gradient-air"
-    };
-    return gradients[element] || "";
-  };
+  const getElementEmoji = (element: string) => ({ água: "🌊", fogo: "🔥", terra: "🌱", ar: "💨" }[element] || "");
+  const getElementGradient = (element: string) => ({ água: "bg-gradient-water", fogo: "bg-gradient-fire", terra: "bg-gradient-earth", ar: "bg-gradient-air" }[element] || "");
 
   if (loading || !user) return null;
 
-  // Determine which avatar to show
   const displayAvatarUrl = tempAvatarUrl || avatarUrl || user.profilePicture;
 
   return (
@@ -173,144 +167,62 @@ const Dashboard = () => {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="font-heading text-4xl font-bold text-gradient-arcane mb-2">
-              Academia Arcana de Alvorada
-            </h1>
+            <h1 className="font-heading text-4xl font-bold text-gradient-arcane mb-2">Academia Arcana de Alvorada</h1>
             <p className="text-muted-foreground">Bem-vindo de volta, {user.name}</p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleLogout}
-            className="gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            Sair
-          </Button>
+          <Button variant="outline" onClick={handleLogout} className="gap-2"><LogOut className="w-4 h-4" /> Sair</Button>
         </div>
 
         <Card className="p-6 shadow-card border-2 border-primary/20">
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-primary shadow-glow">
-                <AvatarImage 
-                  src={displayAvatarUrl || undefined} 
-                  className="object-cover"
-                />
-                <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>
-                  {user.element ? getElementEmoji(user.element) : '?'}
-                </AvatarFallback>
+                <AvatarImage src={displayAvatarUrl || undefined} className="object-cover" />
+                <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>{user.element ? getElementEmoji(user.element) : '?'}</AvatarFallback>
               </Avatar>
-              
-              {/* Show Save/Cancel buttons when there's a new avatar to save */}
               {tempAvatarUrl ? (
                 <div className="absolute -bottom-2 -right-2 flex gap-1 bg-background rounded-full p-1">
-                  <Button
-                    onClick={handleSaveNewAvatar}
-                    className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg h-10 w-10"
-                    title="Salvar"
-                    disabled={uploading}
-                  >
-                    <Save className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    onClick={handleCancelNewAvatar}
-                    className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg h-10 w-10"
-                    title="Cancelar"
-                    disabled={uploading}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  <Button onClick={handleSaveNewAvatar} className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg h-10 w-10" title="Salvar" disabled={uploading}><Save className="w-4 h-4" /></Button>
+                  <Button onClick={handleCancelNewAvatar} className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg h-10 w-10" title="Cancelar" disabled={uploading}><X className="w-4 h-4" /></Button>
                 </div>
               ) : (
-                <label 
-                  htmlFor="profile-picture" 
-                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
-                >
-                  <Camera className="w-4 h-4" />
-                </label>
+                <label htmlFor="profile-picture" className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"><Camera className="w-4 h-4" /></label>
               )}
-              
-              <input 
-                ref={fileInputRef}
-                id="profile-picture" 
-                type="file" 
-                accept="image/*" 
-                className="hidden"
-                onChange={handleProfilePictureUpload}
-                disabled={uploading}
-              />
+              <input ref={fileInputRef} id="profile-picture" type="file" accept="image/*" className="hidden" onChange={handleProfilePictureUpload} disabled={uploading} />
             </div>
-            
             <div className="flex-1">
               <h2 className="font-heading text-2xl font-bold mb-1">{user.name}</h2>
               <p className="text-muted-foreground mb-3">@{user.username}</p>
               <div className="flex gap-4 text-sm">
-                <div className={`px-4 py-2 rounded-lg ${getElementGradient(user.element || '')} text-white font-heading`}>
-                  {user.element ? `${getElementEmoji(user.element)} ${user.element.charAt(0).toUpperCase() + user.element.slice(1)}` : 'Sem Elemento'}
-                </div>
-                <div className="px-4 py-2 rounded-lg bg-gradient-arcane text-white font-heading">
-                  Rank {user.rank}
-                </div>
-                <div className="px-4 py-2 rounded-lg border-2 border-secondary bg-card font-heading">
-                  <Trophy className="w-4 h-4 inline mr-1 text-secondary" />
-                  {user.xp} XP
-                </div>
+                <div className={`px-4 py-2 rounded-lg ${getElementGradient(user.element || '')} text-white font-heading`}>{user.element ? `${getElementEmoji(user.element)} ${user.element.charAt(0).toUpperCase() + user.element.slice(1)}` : 'Sem Elemento'}</div>
+                <div className="px-4 py-2 rounded-lg bg-gradient-arcane text-white font-heading">Rank {user.rank}</div>
+                <div className="px-4 py-2 rounded-lg border-2 border-secondary bg-card font-heading"><Trophy className="w-4 h-4 inline mr-1 text-secondary" />{user.xp} XP</div>
               </div>
             </div>
           </div>
         </Card>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
-            onClick={() => navigate("/aulas")}
-          >
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto bg-gradient-arcane rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <BookOpen className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-heading text-xl font-bold">Aulas</h3>
-              <p className="text-sm text-muted-foreground">Estude e aprenda</p>
-            </div>
+          <Card className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group" onClick={() => navigate("/aulas")}>
+            <div className="text-center space-y-3"><div className="w-16 h-16 mx-auto bg-gradient-arcane rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><BookOpen className="w-8 h-8 text-white" /></div><h3 className="font-heading text-xl font-bold">Aulas</h3><p className="text-sm text-muted-foreground">Estude e aprenda</p></div>
           </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
-            onClick={() => navigate("/poderes")}
-          >
-            <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element || '')} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
-              <Zap className="w-8 h-8 text-white" />
-            </div>
-            <div className="text-center space-y-1 mt-3">
-              <h3 className="font-heading text-xl font-bold">Poderes</h3>
-              <p className="text-sm text-muted-foreground">Seu elemento</p>
-            </div>
+          <Card className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group" onClick={() => navigate("/poderes")}>
+            <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element || '')} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}><Zap className="w-8 h-8 text-white" /></div><div className="text-center space-y-1 mt-3"><h3 className="font-heading text-xl font-bold">Poderes</h3><p className="text-sm text-muted-foreground">Seu elemento</p></div>
           </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
-            onClick={() => navigate("/locais")}
-          >
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Map className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-heading text-xl font-bold">Locais</h3>
-              <p className="text-sm text-muted-foreground">Converse com amigos</p>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
-            onClick={() => navigate("/missoes")}
-          >
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-secondary to-secondary/70 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Target className="w-8 h-8 text-secondary-foreground" />
-              </div>
-              <h3 className="font-heading text-xl font-bold">Missões</h3>
-              <p className="text-sm text-muted-foreground">Complete tarefas</p>
-            </div>
+          <AlertDialog open={isLocationAlertOpen} onOpenChange={setIsLocationAlertOpen}>
+            <AlertDialogTrigger asChild>
+              <Card className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group">
+                <div className="text-center space-y-3"><div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Map className="w-8 h-8 text-white" /></div><h3 className="font-heading text-xl font-bold">Locais</h3><p className="text-sm text-muted-foreground">Converse com amigos</p></div>
+              </Card>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader><AlertDialogTitle>Acesso Restrito</AlertDialogTitle><AlertDialogDescription>Insira a senha para acessar os locais da academia.</AlertDialogDescription></AlertDialogHeader>
+              <Input type="password" placeholder="********" value={locationPassword} onChange={(e) => setLocationPassword(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleLocationAccess()} />
+              <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleLocationAccess}>Entrar</AlertDialogAction></AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Card className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group" onClick={() => navigate("/missoes")}>
+            <div className="text-center space-y-3"><div className="w-16 h-16 mx-auto bg-gradient-to-br from-secondary to-secondary/70 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Target className="w-8 h-8 text-secondary-foreground" /></div><h3 className="font-heading text-xl font-bold">Missões</h3><p className="text-sm text-muted-foreground">Complete tarefas</p></div>
           </Card>
         </div>
       </div>

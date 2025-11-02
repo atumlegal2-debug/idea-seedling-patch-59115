@@ -1,12 +1,23 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Home, Trees } from "lucide-react";
+import { toast } from "sonner";
 
 const Locations = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+
+  useEffect(() => {
+    const isLocationAuthenticated = sessionStorage.getItem('isLocationAuthenticated');
+    if (isLocationAuthenticated !== 'true') {
+      toast.error("Acesso negado. Por favor, insira a senha.");
+      const path = user?.isProfessor ? "/professor" : "/dashboard";
+      navigate(path);
+    }
+  }, [navigate, user]);
 
   const allLocations = [
     { name: "Sala de Aula - Prof. Wooyoung", path: "sala-wooyoung", icon: <BookOpen className="w-10 h-10 text-white" />, gradient: "bg-gradient-arcane" },
