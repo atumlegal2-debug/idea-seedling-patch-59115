@@ -198,8 +198,9 @@ const Dashboard = () => {
             onClick={() => navigate("/poderes")}
           >
             <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element || '')} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                <Zap className="w-8 h-8 text-white" />
-              </div>
+              <Zap className="w-8 h-8 text-white" />
+            </div>
+            <div className="text-center space-y-1 mt-3">
               <h3 className="font-heading text-xl font-bold">Poderes</h3>
               <p className="text-sm text-muted-foreground">Seu elemento</p>
             </div>
