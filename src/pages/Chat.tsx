@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
+import { cn } from '@/lib/utils';
 
 interface Message {
   id: number;
@@ -33,6 +34,45 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const locationName = locationId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+  const locationConfig = {
+    'floresta': {
+        overlay: 'bg-gradient-to-b from-emerald-950/70 via-green-950/80 to-black/90',
+        header: 'bg-emerald-950/50',
+        input: 'bg-emerald-950/30',
+    },
+    'sala-wooyoung': {
+        overlay: 'bg-gradient-to-b from-sky-950/70 via-blue-950/80 to-black/90',
+        header: 'bg-sky-950/50',
+        input: 'bg-sky-950/30',
+    },
+    'sala-romeo': {
+        overlay: 'bg-gradient-to-b from-rose-950/70 via-red-950/80 to-black/90',
+        header: 'bg-rose-950/50',
+        input: 'bg-rose-950/30',
+    },
+    'sala-niki': {
+        overlay: 'bg-gradient-to-b from-amber-950/70 via-yellow-950/80 to-black/90',
+        header: 'bg-amber-950/50',
+        input: 'bg-amber-950/30',
+    },
+    'default': {
+        overlay: 'bg-gradient-to-b from-background/95 via-background/90 to-background/95',
+        header: 'bg-background/80',
+        input: 'bg-background/80',
+    }
+  };
+
+  const getLocationConfig = () => {
+      if (!locationId) return locationConfig.default;
+      if (locationId.includes('floresta')) return locationConfig.floresta;
+      if (locationId.includes('sala-wooyoung')) return locationConfig['sala-wooyoung'];
+      if (locationId.includes('sala-romeo')) return locationConfig['sala-romeo'];
+      if (locationId.includes('sala-niki')) return locationConfig['sala-niki'];
+      return locationConfig.default;
+  };
+
+  const currentConfig = getLocationConfig();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -119,13 +159,14 @@ const Chat = () => {
     <div className="relative h-screen w-full flex flex-col bg-background">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-10" />
+        <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-20" />
+        <div className={cn("absolute inset-0", currentConfig.overlay)} />
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col h-full max-w-2xl mx-auto w-full">
         {/* Header */}
-        <header className="flex items-center bg-background/80 backdrop-blur-sm p-4 pb-3 justify-between shrink-0 border-b border-border">
+        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-3 justify-between shrink-0 border-b border-border", currentConfig.header)}>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10">
               <ArrowLeft className="w-5 h-5" />
@@ -191,7 +232,7 @@ const Chat = () => {
         </div>
 
         {/* Input Bar */}
-        <div className="bg-background/80 backdrop-blur-sm p-4 pt-2 border-t border-border shrink-0">
+        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t border-border shrink-0", currentConfig.input)}>
           <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-muted/50 border border-border rounded-full px-2 py-1.5">
             <Input
               value={newMessage}
