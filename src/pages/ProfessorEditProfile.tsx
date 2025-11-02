@@ -66,9 +66,10 @@ const ProfessorEditProfile = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with timestamp to avoid caching
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      setAvatarUrl(data.publicUrl);
+      const urlWithTimestamp = `${data.publicUrl}?t=${Date.now()}`;
+      setAvatarUrl(urlWithTimestamp);
       
       toast.success("Foto carregada com sucesso! Clique em salvar para confirmar.");
     } catch (error: any) {
@@ -92,7 +93,7 @@ const ProfessorEditProfile = () => {
         .from('users')
         .update({
           element: element,
-          photo_url: avatarUrl,
+          photo_url: avatarUrl.split('?')[0] // Remove timestamp for storage
         })
         .eq('id', user.id);
 
@@ -147,7 +148,11 @@ const ProfessorEditProfile = () => {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-primary shadow-glow">
-                  <AvatarImage key={displayAvatarUrl} src={displayAvatarUrl || undefined} />
+                  <AvatarImage 
+                    key={displayAvatarUrl} 
+                    src={displayAvatarUrl || undefined} 
+                    className="object-cover"
+                  />
                   <AvatarFallback className="text-4xl font-heading bg-muted">?</AvatarFallback>
                 </Avatar>
                 

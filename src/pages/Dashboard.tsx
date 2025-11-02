@@ -84,9 +84,10 @@ const Dashboard = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with timestamp to avoid caching
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      setAvatarUrl(data.publicUrl);
+      const urlWithTimestamp = `${data.publicUrl}?t=${Date.now()}`;
+      setAvatarUrl(urlWithTimestamp);
       
       toast.success("Foto carregada com sucesso! Clique em salvar para confirmar.");
     } catch (error: any) {
@@ -108,7 +109,7 @@ const Dashboard = () => {
     try {
       const { error: updateUserError } = await supabase
         .from('users')
-        .update({ photo_url: avatarUrl })
+        .update({ photo_url: avatarUrl.split('?')[0] }) // Remove timestamp for storage
         .eq('id', user.id);
 
       if (updateUserError) throw updateUserError;
@@ -191,7 +192,10 @@ const Dashboard = () => {
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-primary shadow-glow">
-                <AvatarImage src={displayAvatarUrl || undefined} />
+                <AvatarImage 
+                  src={displayAvatarUrl || undefined} 
+                  className="object-cover"
+                />
                 <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>
                   {user.element ? getElementEmoji(user.element) : '?'}
                 </AvatarFallback>
