@@ -118,7 +118,7 @@ const ProfessorXP = () => {
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex items-center gap-4 flex-1">
                     <Avatar className="w-16 h-16 border-4 border-primary shadow-glow">
-                      <AvatarImage src={user.photo_url || undefined} className="object-cover" />
+                      <AvatarImage src={user.photo_url ? `${user.photo_url}?t=${new Date().getTime()}` : undefined} className="object-cover" />
                       <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>{user.element ? getElementEmoji(user.element) : '?'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">

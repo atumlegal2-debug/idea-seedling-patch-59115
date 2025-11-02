@@ -104,7 +104,7 @@ const AdminUsers = () => {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="w-12 h-12 border-2 border-primary">
-                    <AvatarImage src={user.photo_url || undefined} />
+                    <AvatarImage src={user.photo_url ? `${user.photo_url}?t=${new Date().getTime()}` : undefined} />
                     <AvatarFallback className="bg-muted">{getElementEmoji(user.element)}</AvatarFallback>
                   </Avatar>
                   <div>

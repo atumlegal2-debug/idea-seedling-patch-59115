@@ -249,7 +249,7 @@ const Chat = () => {
                 {msg.user_id !== user?.id && (
                   <>
                     <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-primary/50">
-                      <AvatarImage src={msg.users.photo_url || undefined} />
+                      <AvatarImage src={msg.users.photo_url ? `${msg.users.photo_url}?t=${new Date().getTime()}` : undefined} />
                       <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1 items-start max-w-md">
