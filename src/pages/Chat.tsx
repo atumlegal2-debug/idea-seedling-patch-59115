@@ -41,7 +41,6 @@ const Chat = () => {
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<Map<string, number>>(new Map());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const locationName = locationId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
@@ -90,10 +89,6 @@ const Chat = () => {
 
   const currentConfig = getLocationConfig();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const fetchMessages = useCallback(async () => {
     if (!locationId) return;
     setLoading(true);
@@ -101,7 +96,7 @@ const Chat = () => {
       .from('messages')
       .select('*, users(name, photo_url, element)')
       .eq('location_name', locationId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast.error('Erro ao carregar mensagens.');
@@ -115,10 +110,6 @@ const Chat = () => {
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     if (!locationId || !user) return;
@@ -143,7 +134,7 @@ const Chat = () => {
       if (error || !userData) return;
 
       const newMessage: Message = { ...newMessagePartial, users: userData };
-      setMessages(current => [...current, newMessage]);
+      setMessages(current => [newMessage, ...current]);
     };
 
     const handleTypingEvent = ({ payload }: { payload: TypingUser }) => {
@@ -185,7 +176,7 @@ const Chat = () => {
       users: { name: user.name, photo_url: user.profilePicture, element: user.element },
     };
 
-    setMessages(current => [...current, optimisticMessage]);
+    setMessages(current => [optimisticMessage, ...current]);
     setNewMessage('');
 
     const { error } = await supabase.from('messages').insert({ content, user_id: user.id, location_name: locationId });
@@ -242,7 +233,12 @@ const Chat = () => {
           <Button variant="ghost" size="icon" className="h-10 w-10"><MoreVertical className="w-5 h-5" /></Button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-4">
+          <div className="h-6 text-sm text-muted-foreground italic">
+            {typingUsers.length > 0 && (
+              `${typingUsers.map(u => u.name).join(', ')} ${typingUsers.length > 1 ? 'estão' : 'está'} digitando...`
+            )}
+          </div>
           {loading ? (
             <p className="text-center text-muted-foreground m-auto">Carregando chat...</p>
           ) : messages.length === 0 ? (
@@ -283,12 +279,6 @@ const Chat = () => {
               </div>
             ))
           )}
-          <div className="h-6 text-sm text-muted-foreground italic">
-            {typingUsers.length > 0 && (
-              `${typingUsers.map(u => u.name).join(', ')} ${typingUsers.length > 1 ? 'estão' : 'está'} digitando...`
-            )}
-          </div>
-          <div ref={messagesEndRef} />
         </div>
 
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
