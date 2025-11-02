@@ -33,7 +33,12 @@ const ProfessorXP = () => {
   }, [professorUser, loading, navigate]);
 
   const loadUsers = useCallback(async () => {
-    const { data, error } = await supabase.from('users').select('*');
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('is_professor', false)
+      .order('name', { ascending: true });
+      
     if (error) {
       toast.error("Erro ao carregar alunos.");
     } else {
