@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, logout, loading, refreshUser } = useUser();
+  const { user, logout, loading, refreshUser, updateUser } = useUser();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
@@ -117,7 +117,8 @@ const Dashboard = () => {
 
       if (updateUserError) throw updateUserError;
       
-      await refreshUser();
+      updateUser({ profilePicture: avatarUrl });
+      
       setTempAvatarUrl(null);
       toast.success("Foto de perfil atualizada!");
       

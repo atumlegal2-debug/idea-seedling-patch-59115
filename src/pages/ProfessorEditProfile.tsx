@@ -15,7 +15,7 @@ import airIcon from "@/assets/air-element.png";
 
 const ProfessorEditProfile = () => {
   const navigate = useNavigate();
-  const { user, refreshUser } = useUser();
+  const { user, updateUser } = useUser();
   const [element, setElement] = useState(user?.element || null);
   const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || null);
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
@@ -89,17 +89,21 @@ const ProfessorEditProfile = () => {
     if (!user) return;
 
     try {
+      const updates = {
+        element: element,
+        photo_url: avatarUrl ? avatarUrl.split('?')[0] : null // Remove timestamp for storage
+      };
+
       const { error } = await supabase
         .from('users')
-        .update({
-          element: element,
-          photo_url: avatarUrl.split('?')[0] // Remove timestamp for storage
-        })
+        .update(updates)
         .eq('id', user.id);
 
       if (error) throw error;
       
-      await refreshUser();
+      // Manually update context state for real-time feedback
+      updateUser({ element: element, profilePicture: avatarUrl });
+      
       setTempAvatarUrl(null);
       toast.success("Perfil atualizado com sucesso!");
       navigate('/professor');

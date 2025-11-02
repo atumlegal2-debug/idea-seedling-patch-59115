@@ -26,6 +26,7 @@ interface UserContextType {
   login: (user: AppUser, saveProfile: boolean) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateUser: (updates: Partial<AppUser>) => void;
   removeProfile: (username: string) => void;
 }
 
@@ -85,8 +86,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("savedProfiles", JSON.stringify(updatedProfiles));
   };
 
+  const updateUser = (updates: Partial<AppUser>) => {
+    if (user) {
+      setUser(prevUser => ({ ...prevUser!, ...updates }));
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, refreshUser, removeProfile }}>
+    <UserContext.Provider value={{ user, loading, login, logout, refreshUser, updateUser, removeProfile }}>
       {children}
     </UserContext.Provider>
   );
