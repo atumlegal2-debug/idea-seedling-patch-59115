@@ -74,11 +74,6 @@ const Dashboard = () => {
     const fileName = `${user.id}.${fileExt}`;
 
     try {
-      // Remove existing avatar file if exists
-      const { error: removeError } = await supabase.storage
-        .from('avatars')
-        .remove([fileName]);
-
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -205,22 +200,22 @@ const Dashboard = () => {
               {/* Show Save/Cancel buttons when there's a new avatar to save */}
               {tempAvatarUrl ? (
                 <div className="absolute -bottom-2 -right-2 flex gap-1 bg-background rounded-full p-1">
-                  <button
+                  <Button
                     onClick={handleSaveNewAvatar}
-                    className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
+                    className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg h-10 w-10"
                     title="Salvar"
                     disabled={uploading}
                   >
                     <Save className="w-4 h-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={handleCancelNewAvatar}
-                    className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg"
+                    className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg h-10 w-10"
                     title="Cancelar"
                     disabled={uploading}
                   >
                     <X className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <label 
