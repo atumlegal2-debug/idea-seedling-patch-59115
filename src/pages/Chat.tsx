@@ -5,7 +5,7 @@ import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Send, Park, BookOpen, Home, MoreVertical, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Send, Trees, BookOpen, Home, MoreVertical, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -155,10 +155,10 @@ const Chat = () => {
   };
 
   const getLocationIcon = () => {
-    if (locationId?.includes('floresta')) return <Park className="w-6 h-6 text-green-400" />;
+    if (locationId?.includes('floresta')) return <Trees className="w-6 h-6 text-green-400" />;
     if (locationId?.includes('sala')) return <BookOpen className="w-6 h-6 text-primary" />;
     if (locationId?.includes('dormitorio')) return <Home className="w-6 h-6 text-secondary" />;
-    return <Park className="w-6 h-6 text-muted-foreground" />;
+    return <Trees className="w-6 h-6 text-muted-foreground" />;
   };
 
   return (

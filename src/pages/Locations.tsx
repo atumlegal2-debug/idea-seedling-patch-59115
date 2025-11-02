@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, Home, TreePine } from "lucide-react";
+import { ArrowLeft, BookOpen, Home, Trees } from "lucide-react";
 
 const Locations = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Locations = () => {
     { name: "Sala de Aula - Prof. Wooyoung", path: "sala-wooyoung", icon: <BookOpen className="w-10 h-10 text-white" />, gradient: "bg-gradient-arcane" },
     { name: "Sala de Aula - Prof. Romeo", path: "sala-romeo", icon: <BookOpen className="w-10 h-10 text-white" />, gradient: "bg-gradient-arcane" },
     { name: "Sala de Aula - Prof. Niki", path: "sala-niki", icon: <BookOpen className="w-10 h-10 text-white" />, gradient: "bg-gradient-arcane" },
-    { name: "Floresta Arcana", path: "floresta", icon: <TreePine className="w-10 h-10 text-white" />, gradient: "bg-gradient-earth" },
+    { name: "Floresta Arcana", path: "floresta", icon: <Trees className="w-10 h-10 text-white" />, gradient: "bg-gradient-earth" },
     { name: "Dormitório dos Alunos", path: "dormitorio", icon: <Home className="w-10 h-10 text-white" />, gradient: "bg-gradient-to-br from-secondary to-secondary/70", studentOnly: true },
   ];
 
