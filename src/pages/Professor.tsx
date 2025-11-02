@@ -25,21 +25,15 @@ const Professor = () => {
   const { user, logout, refreshUser } = useUser();
   const [locationPassword, setLocationPassword] = useState("");
   const [isLocationAlertOpen, setIsLocationAlertOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || null);
 
   useEffect(() => {
     if (user) {
-      setAvatarUrl(user.profilePicture);
-      
-      // Escutar mudanças no perfil do usuário
       const channel = supabase
         .channel(`public:users:id=eq.${user.id}`)
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
-          (payload) => {
-            console.log('User data changed!', payload);
-            // Atualizar os dados do usuário quando houver mudanças
+          () => {
             refreshUser();
           }
         )
@@ -50,13 +44,6 @@ const Professor = () => {
       };
     }
   }, [user, refreshUser]);
-
-  // Atualizar a URL da imagem quando o usuário mudar
-  useEffect(() => {
-    if (user) {
-      setAvatarUrl(user.profilePicture);
-    }
-  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -82,17 +69,6 @@ const Professor = () => {
     return emojis[element] || "?";
   };
 
-  // Adicionar timestamp para forçar atualização do cache
-  const getAvatarUrlWithTimestamp = () => {
-    if (!avatarUrl) return undefined;
-    // Adicionar timestamp apenas se for uma URL do Supabase
-    if (avatarUrl.includes('supabase')) {
-      const separator = avatarUrl.includes('?') ? '&' : '?';
-      return `${avatarUrl}${separator}t=${Date.now()}`;
-    }
-    return avatarUrl;
-  };
-
   return (
     <div className="min-h-screen p-6 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -100,7 +76,8 @@ const Professor = () => {
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16 border-2 border-primary">
               <AvatarImage 
-                src={getAvatarUrlWithTimestamp()} 
+                key={user?.profilePicture}
+                src={user?.profilePicture || undefined} 
                 className="object-cover"
               />
               <AvatarFallback className="bg-muted text-2xl font-heading">
