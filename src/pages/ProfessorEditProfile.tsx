@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Camera, Save } from 'lucide-react';
+import { ArrowLeft, Camera, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 import waterIcon from "@/assets/water-element.png";
 import fireIcon from "@/assets/fire-element.png";
@@ -16,11 +16,11 @@ import airIcon from "@/assets/air-element.png";
 const ProfessorEditProfile = () => {
   const navigate = useNavigate();
   const { user, refreshUser } = useUser();
-  
   const [element, setElement] = useState(user?.element || null);
   const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || null);
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user?.isProfessor) {
@@ -33,6 +33,18 @@ const ProfessorEditProfile = () => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor, selecione um arquivo de imagem válido.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter menos de 5MB.");
+      return;
+    }
 
     setUploading(true);
     
@@ -47,27 +59,33 @@ const ProfessorEditProfile = () => {
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          cacheControl: '3600'
+        });
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const publicUrl = data.publicUrl;
+      setAvatarUrl(data.publicUrl);
       
-      setAvatarUrl(publicUrl);
       toast.success("Foto carregada com sucesso! Clique em salvar para confirmar.");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no upload:", error);
-      toast.error("Erro ao enviar a foto. Tente novamente.");
+      toast.error(`Erro ao enviar a foto: ${error.message || "Tente novamente"}`);
       setTempAvatarUrl(null);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } finally {
       setUploading(false);
     }
   };
 
   const handleSave = async () => {
-    if (!user || !avatarUrl) return;
+    if (!user) return;
 
     try {
       const { error } = await supabase
@@ -84,18 +102,29 @@ const ProfessorEditProfile = () => {
       setTempAvatarUrl(null);
       toast.success("Perfil atualizado com sucesso!");
       navigate('/professor');
-    } catch (error) {
+      
+      // Clean up temporary URL
+      if (tempAvatarUrl) {
+        URL.revokeObjectURL(tempAvatarUrl);
+      }
+    } catch (error: any) {
       console.error("Erro ao salvar:", error);
-      toast.error("Erro ao atualizar o perfil.");
+      toast.error(`Erro ao atualizar o perfil: ${error.message || "Tente novamente"}`);
     }
   };
 
   const handleCancelNewAvatar = () => {
     setAvatarUrl(user?.profilePicture || null);
     setTempAvatarUrl(null);
-    // Revoke the temporary URL to free memory
+    
+    // Clean up temporary URL
     if (tempAvatarUrl) {
       URL.revokeObjectURL(tempAvatarUrl);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -124,11 +153,12 @@ const ProfessorEditProfile = () => {
                 
                 {/* Show Save/Cancel buttons when there's a new avatar to save */}
                 {tempAvatarUrl ? (
-                  <div className="absolute bottom-0 right-0 flex gap-1">
+                  <div className="absolute -bottom-2 -right-2 flex gap-1 bg-background rounded-full p-1">
                     <button
                       onClick={handleSave}
                       className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
                       title="Salvar"
+                      disabled={uploading}
                     >
                       <Save className="w-4 h-4" />
                     </button>
@@ -136,11 +166,9 @@ const ProfessorEditProfile = () => {
                       onClick={handleCancelNewAvatar}
                       className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg"
                       title="Cancelar"
+                      disabled={uploading}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
@@ -153,6 +181,7 @@ const ProfessorEditProfile = () => {
                 )}
                 
                 <input 
+                  ref={fileInputRef}
                   id="profile-picture" 
                   type="file" 
                   accept="image/*" 
@@ -195,7 +224,7 @@ const ProfessorEditProfile = () => {
             <Button
               onClick={handleSave}
               className="w-full bg-gradient-arcane hover:opacity-90 shadow-glow text-lg py-6 gap-2"
-              disabled={tempAvatarUrl !== null} // Disable main button when using inline save
+              disabled={uploading || tempAvatarUrl !== null}
             >
               <Save className="w-5 h-5" />
               Salvar Perfil

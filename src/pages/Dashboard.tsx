@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Zap, Target, Trophy, LogOut, Camera, Map, Save } from "lucide-react";
+import { BookOpen, Zap, Target, Trophy, LogOut, Camera, Map, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout, loading, refreshUser } = useUser();
-  const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
+      setAvatarUrl(user.profilePicture);
       const channel = supabase
         .channel(`public:users:id=eq.${user.id}`)
         .on(
@@ -32,9 +34,13 @@ const Dashboard = () => {
 
       return () => {
         supabase.removeChannel(channel);
+        // Clean up temporary URL
+        if (tempAvatarUrl) {
+          URL.revokeObjectURL(tempAvatarUrl);
+        }
       };
     }
-  }, [user, refreshUser]);
+  }, [user, refreshUser, tempAvatarUrl]);
 
   const handleLogout = () => {
     logout();
@@ -46,12 +52,23 @@ const Dashboard = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    setIsUploading(true);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor, selecione um arquivo de imagem válido.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter menos de 5MB.");
+      return;
+    }
+
+    setUploading(true);
     
     // Create a temporary URL for preview
     const tempUrl = URL.createObjectURL(file);
     setTempAvatarUrl(tempUrl);
-    setNewAvatarUrl(null); // Clear any previous new avatar URL
     
     const fileExt = file.name.split('.').pop();
     const fileName = `${user.id}/avatar.${fileExt}`;
@@ -60,52 +77,68 @@ const Dashboard = () => {
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          cacheControl: '3600'
+        });
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const publicUrl = data.publicUrl;
+      setAvatarUrl(data.publicUrl);
       
-      setNewAvatarUrl(publicUrl);
       toast.success("Foto carregada com sucesso! Clique em salvar para confirmar.");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no upload:", error);
-      toast.error("Erro ao enviar a foto. Tente novamente.");
+      toast.error(`Erro ao enviar a foto: ${error.message || "Tente novamente"}`);
       setTempAvatarUrl(null);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } finally {
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
   const handleSaveNewAvatar = async () => {
-    if (!newAvatarUrl || !user) return;
+    if (!avatarUrl || !user) return;
 
     try {
       const { error: updateUserError } = await supabase
         .from('users')
-        .update({ photo_url: newAvatarUrl })
+        .update({ photo_url: avatarUrl })
         .eq('id', user.id);
 
       if (updateUserError) throw updateUserError;
       
       await refreshUser();
-      setNewAvatarUrl(null);
       setTempAvatarUrl(null);
       toast.success("Foto de perfil atualizada!");
-    } catch (error) {
+      
+      // Clean up temporary URL
+      if (tempAvatarUrl) {
+        URL.revokeObjectURL(tempAvatarUrl);
+      }
+    } catch (error: any) {
       console.error("Erro ao salvar:", error);
-      toast.error("Erro ao atualizar o perfil.");
+      toast.error(`Erro ao atualizar o perfil: ${error.message || "Tente novamente"}`);
     }
   };
 
   const handleCancelNewAvatar = () => {
-    setNewAvatarUrl(null);
+    setAvatarUrl(user?.profilePicture || null);
     setTempAvatarUrl(null);
-    // Revoke the temporary URL to free memory
+    
+    // Clean up temporary URL
     if (tempAvatarUrl) {
       URL.revokeObjectURL(tempAvatarUrl);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -132,7 +165,7 @@ const Dashboard = () => {
   if (loading || !user) return null;
 
   // Determine which avatar to show
-  const displayAvatarUrl = tempAvatarUrl || newAvatarUrl || user.profilePicture;
+  const displayAvatarUrl = tempAvatarUrl || avatarUrl || user.profilePicture;
 
   return (
     <div className="min-h-screen p-6 md:p-8">
@@ -165,12 +198,13 @@ const Dashboard = () => {
               </Avatar>
               
               {/* Show Save/Cancel buttons when there's a new avatar to save */}
-              {newAvatarUrl ? (
-                <div className="absolute bottom-0 right-0 flex gap-1">
+              {tempAvatarUrl ? (
+                <div className="absolute -bottom-2 -right-2 flex gap-1 bg-background rounded-full p-1">
                   <button
                     onClick={handleSaveNewAvatar}
                     className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
                     title="Salvar"
+                    disabled={uploading}
                   >
                     <Save className="w-4 h-4" />
                   </button>
@@ -178,11 +212,9 @@ const Dashboard = () => {
                     onClick={handleCancelNewAvatar}
                     className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg"
                     title="Cancelar"
+                    disabled={uploading}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
@@ -195,12 +227,13 @@ const Dashboard = () => {
               )}
               
               <input 
+                ref={fileInputRef}
                 id="profile-picture" 
                 type="file" 
                 accept="image/*" 
                 className="hidden"
                 onChange={handleProfilePictureUpload}
-                disabled={isUploading}
+                disabled={uploading}
               />
             </div>
             
