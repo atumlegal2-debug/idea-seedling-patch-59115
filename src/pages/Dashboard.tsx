@@ -44,10 +44,11 @@ const Dashboard = () => {
     if (!file || !user) return;
 
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const filePath = `${user.id}/avatar.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
       toast.error("Erro ao enviar a foto.");
@@ -56,7 +57,7 @@ const Dashboard = () => {
     }
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    const publicUrl = data.publicUrl;
+    const publicUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
 
     const { error: updateUserError } = await supabase
       .from('users')
@@ -174,8 +175,7 @@ const Dashboard = () => {
             className="p-6 cursor-pointer hover:shadow-glow transition-all border-2 border-transparent hover:border-primary/50 group"
             onClick={() => navigate("/poderes")}
           >
-            <div className="text-center space-y-3">
-              <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element || '')} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
+            <div className={`w-16 h-16 mx-auto ${getElementGradient(user.element || '')} rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <h3 className="font-heading text-xl font-bold">Poderes</h3>

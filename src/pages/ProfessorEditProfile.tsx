@@ -35,10 +35,11 @@ const ProfessorEditProfile = () => {
 
     setUploading(true);
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const filePath = `${user.id}/avatar.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
       toast.error("Erro ao enviar a foto.");
@@ -48,7 +49,9 @@ const ProfessorEditProfile = () => {
     }
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    setAvatarUrl(data.publicUrl);
+    const publicUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+    
+    setAvatarUrl(publicUrl);
     setUploading(false);
     toast.info("Foto carregada. Clique em salvar para confirmar.");
   };
