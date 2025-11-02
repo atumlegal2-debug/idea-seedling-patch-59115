@@ -31,7 +31,6 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const locationName = locationId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
@@ -80,17 +79,13 @@ const Chat = () => {
 
   const currentConfig = getLocationConfig();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const fetchMessages = useCallback(async () => {
     if (!locationId) return;
     const { data, error } = await supabase
       .from('messages')
       .select('*, users(name, photo_url, element)')
       .eq('location_name', locationId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast.error('Erro ao carregar mensagens.');
@@ -104,10 +99,6 @@ const Chat = () => {
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     if (!locationId) return;
@@ -190,7 +181,7 @@ const Chat = () => {
         </header>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-4">
           {loading ? (
             <p className="text-center text-muted-foreground">Carregando chat...</p>
           ) : messages.length === 0 ? (
@@ -237,7 +228,6 @@ const Chat = () => {
               </div>
             ))
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Bar */}
