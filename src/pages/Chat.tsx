@@ -5,7 +5,7 @@ import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Send, Park, BookOpen, Home } from 'lucide-react';
+import { ArrowLeft, Send, Park, BookOpen, Home, MoreVertical, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -166,8 +166,8 @@ const Chat = () => {
       {/* Main Content */}
       <div className="relative z-10 flex flex-col h-full max-w-2xl mx-auto w-full">
         {/* Header */}
-        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-3 justify-between shrink-0 border-b border-border", currentConfig.header)}>
-          <div className="flex items-center gap-3">
+        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-2 justify-between shrink-0 border-b border-white/10", currentConfig.header)}>
+          <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -178,10 +178,13 @@ const Chat = () => {
               <h2 className="text-foreground text-lg font-bold font-heading leading-tight tracking-wide">{locationName}</h2>
             </div>
           </div>
+          <Button variant="ghost" size="icon" className="h-10 w-10">
+            <MoreVertical className="w-5 h-5" />
+          </Button>
         </header>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
             <p className="text-center text-muted-foreground">Carregando chat...</p>
           ) : messages.length === 0 ? (
@@ -192,13 +195,13 @@ const Chat = () => {
                 {/* Other User's Message */}
                 {msg.user_id !== user?.id && (
                   <>
-                    <Avatar className="w-10 h-10 shrink-0 border-2 border-primary/50">
+                    <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-primary/50">
                       <AvatarImage src={msg.users.photo_url || undefined} />
                       <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1 items-start max-w-md">
                       <p className="text-secondary text-sm font-bold font-heading ml-3">{msg.users.name}</p>
-                      <div className="text-base font-normal leading-normal flex rounded-2xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
+                      <div className="text-base font-normal leading-normal flex rounded-xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
                         <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       </div>
                        <p className="text-xs text-muted-foreground mt-1 ml-3">
@@ -212,14 +215,14 @@ const Chat = () => {
                   <>
                     <div className="flex flex-col gap-1 items-end max-w-md">
                       <p className="text-primary text-sm font-bold font-heading mr-3">{msg.users.name}</p>
-                      <div className="text-base font-normal leading-normal flex rounded-2xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
+                      <div className="text-base font-normal leading-normal flex rounded-xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
                         <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       </div>
                        <p className="text-xs text-muted-foreground mt-1 mr-3">
                         {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
                       </p>
                     </div>
-                    <Avatar className="w-10 h-10 shrink-0 border-2 border-secondary">
+                    <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-secondary">
                       <AvatarImage src={user?.profilePicture || undefined} />
                       <AvatarFallback>{getElementEmoji(user?.element)}</AvatarFallback>
                     </Avatar>
@@ -232,12 +235,15 @@ const Chat = () => {
         </div>
 
         {/* Input Bar */}
-        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t border-border shrink-0", currentConfig.input)}>
+        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t border-white/10 shrink-0", currentConfig.input)}>
           <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-muted/50 border border-border rounded-full px-2 py-1.5">
+            <Button type="button" variant="ghost" size="icon" className="text-primary hover:bg-primary/20 rounded-full shrink-0">
+              <PlusCircle className="w-5 h-5" />
+            </Button>
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Digite sua mensagem..."
+              placeholder="Digite sua runa..."
               className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground border-none focus:ring-0 p-2 text-base"
             />
             <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-10 h-10 shadow-glow hover:opacity-90">
