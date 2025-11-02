@@ -57,7 +57,7 @@ const ProfessorEditProfile = () => {
 
     try {
       // Remove existing avatar file if exists
-      await supabase.storage
+      const { error: removeError } = await supabase.storage
         .from('avatars')
         .remove([fileName]);
 
@@ -65,7 +65,7 @@ const ProfessorEditProfile = () => {
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { 
-          upsert: false,
+          upsert: true,
           cacheControl: '3600'
         });
 
