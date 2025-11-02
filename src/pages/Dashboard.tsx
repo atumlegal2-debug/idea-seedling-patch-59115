@@ -13,6 +13,7 @@ const Dashboard = () => {
   const { user, logout, loading, refreshUser } = useUser();
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -46,41 +47,65 @@ const Dashboard = () => {
     if (!file || !user) return;
 
     setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${user.id}/avatar.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { upsert: true });
-
-    if (uploadError) {
-      toast.error("Erro ao enviar a foto.");
-      console.error(uploadError);
-      setIsUploading(false);
-      return;
-    }
-
-    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    const publicUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
     
-    setNewAvatarUrl(publicUrl);
-    setIsUploading(false);
+    // Create a temporary URL for preview
+    const tempUrl = URL.createObjectURL(file);
+    setTempAvatarUrl(tempUrl);
+    setNewAvatarUrl(null); // Clear any previous new avatar URL
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/avatar.${fileExt}`;
+
+    try {
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+      
+      setNewAvatarUrl(publicUrl);
+      toast.success("Foto carregada com sucesso! Clique em salvar para confirmar.");
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      toast.error("Erro ao enviar a foto. Tente novamente.");
+      setTempAvatarUrl(null);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSaveNewAvatar = async () => {
     if (!newAvatarUrl || !user) return;
 
-    const { error: updateUserError } = await supabase
-      .from('users')
-      .update({ photo_url: newAvatarUrl })
-      .eq('id', user.id);
+    try {
+      const { error: updateUserError } = await supabase
+        .from('users')
+        .update({ photo_url: newAvatarUrl })
+        .eq('id', user.id);
 
-    if (updateUserError) {
-      toast.error("Erro ao atualizar o perfil.");
-    } else {
+      if (updateUserError) throw updateUserError;
+      
       await refreshUser();
       setNewAvatarUrl(null);
+      setTempAvatarUrl(null);
       toast.success("Foto de perfil atualizada!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao atualizar o perfil.");
+    }
+  };
+
+  const handleCancelNewAvatar = () => {
+    setNewAvatarUrl(null);
+    setTempAvatarUrl(null);
+    // Revoke the temporary URL to free memory
+    if (tempAvatarUrl) {
+      URL.revokeObjectURL(tempAvatarUrl);
     }
   };
 
@@ -106,6 +131,9 @@ const Dashboard = () => {
 
   if (loading || !user) return null;
 
+  // Determine which avatar to show
+  const displayAvatarUrl = tempAvatarUrl || newAvatarUrl || user.profilePicture;
+
   return (
     <div className="min-h-screen p-6 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -130,18 +158,33 @@ const Dashboard = () => {
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-primary shadow-glow">
-                <AvatarImage src={newAvatarUrl || user.profilePicture || undefined} />
+                <AvatarImage src={displayAvatarUrl || undefined} />
                 <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>
                   {user.element ? getElementEmoji(user.element) : '?'}
                 </AvatarFallback>
               </Avatar>
+              
+              {/* Show Save/Cancel buttons when there's a new avatar to save */}
               {newAvatarUrl ? (
-                <button
-                  onClick={handleSaveNewAvatar}
-                  className="absolute bottom-0 right-0 bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
-                >
-                  <Save className="w-4 h-4" />
-                </button>
+                <div className="absolute bottom-0 right-0 flex gap-1">
+                  <button
+                    onClick={handleSaveNewAvatar}
+                    className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
+                    title="Salvar"
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelNewAvatar}
+                    className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg"
+                    title="Cancelar"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               ) : (
                 <label 
                   htmlFor="profile-picture" 
@@ -150,6 +193,7 @@ const Dashboard = () => {
                   <Camera className="w-4 h-4" />
                 </label>
               )}
+              
               <input 
                 id="profile-picture" 
                 type="file" 

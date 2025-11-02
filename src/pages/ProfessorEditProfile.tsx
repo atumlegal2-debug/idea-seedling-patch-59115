@@ -19,6 +19,7 @@ const ProfessorEditProfile = () => {
   
   const [element, setElement] = useState(user?.element || null);
   const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || null);
+  const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -34,48 +35,72 @@ const ProfessorEditProfile = () => {
     if (!file || !user) return;
 
     setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${user.id}/avatar.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { upsert: true });
-
-    if (uploadError) {
-      toast.error("Erro ao enviar a foto.");
-      console.error(uploadError);
-      setUploading(false);
-      return;
-    }
-
-    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    const publicUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
     
-    setAvatarUrl(publicUrl);
-    setUploading(false);
-    toast.info("Foto carregada. Clique em salvar para confirmar.");
+    // Create a temporary URL for preview
+    const tempUrl = URL.createObjectURL(file);
+    setTempAvatarUrl(tempUrl);
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/avatar.${fileExt}`;
+
+    try {
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+      
+      setAvatarUrl(publicUrl);
+      toast.success("Foto carregada com sucesso! Clique em salvar para confirmar.");
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      toast.error("Erro ao enviar a foto. Tente novamente.");
+      setTempAvatarUrl(null);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !avatarUrl) return;
 
-    const { error } = await supabase
-      .from('users')
-      .update({
-        element: element,
-        photo_url: avatarUrl,
-      })
-      .eq('id', user.id);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          element: element,
+          photo_url: avatarUrl,
+        })
+        .eq('id', user.id);
 
-    if (error) {
-      toast.error("Erro ao salvar o perfil.");
-      console.error(error);
-    } else {
+      if (error) throw error;
+      
       await refreshUser();
+      setTempAvatarUrl(null);
       toast.success("Perfil atualizado com sucesso!");
       navigate('/professor');
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao atualizar o perfil.");
     }
   };
+
+  const handleCancelNewAvatar = () => {
+    setAvatarUrl(user?.profilePicture || null);
+    setTempAvatarUrl(null);
+    // Revoke the temporary URL to free memory
+    if (tempAvatarUrl) {
+      URL.revokeObjectURL(tempAvatarUrl);
+    }
+  };
+
+  // Determine which avatar to show
+  const displayAvatarUrl = tempAvatarUrl || avatarUrl;
 
   if (!user) return null;
 
@@ -93,15 +118,40 @@ const ProfessorEditProfile = () => {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-primary shadow-glow">
-                  <AvatarImage key={avatarUrl} src={avatarUrl || undefined} />
+                  <AvatarImage key={displayAvatarUrl} src={displayAvatarUrl || undefined} />
                   <AvatarFallback className="text-4xl font-heading bg-muted">?</AvatarFallback>
                 </Avatar>
-                <label 
-                  htmlFor="profile-picture" 
-                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-3 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
-                >
-                  <Camera className="w-5 h-5" />
-                </label>
+                
+                {/* Show Save/Cancel buttons when there's a new avatar to save */}
+                {tempAvatarUrl ? (
+                  <div className="absolute bottom-0 right-0 flex gap-1">
+                    <button
+                      onClick={handleSave}
+                      className="bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
+                      title="Salvar"
+                    >
+                      <Save className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleCancelNewAvatar}
+                      className="bg-destructive text-white rounded-full p-2 cursor-pointer hover:bg-destructive/80 transition-colors shadow-lg"
+                      title="Cancelar"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label 
+                    htmlFor="profile-picture" 
+                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-3 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </label>
+                )}
+                
                 <input 
                   id="profile-picture" 
                   type="file" 
@@ -145,6 +195,7 @@ const ProfessorEditProfile = () => {
             <Button
               onClick={handleSave}
               className="w-full bg-gradient-arcane hover:opacity-90 shadow-glow text-lg py-6 gap-2"
+              disabled={tempAvatarUrl !== null} // Disable main button when using inline save
             >
               <Save className="w-5 h-5" />
               Salvar Perfil
