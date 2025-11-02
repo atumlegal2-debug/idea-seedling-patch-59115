@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Zap, Target, Trophy, LogOut, Camera, Map } from "lucide-react";
+import { BookOpen, Zap, Target, Trophy, LogOut, Camera, Map, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout, loading, refreshUser } = useUser();
+  const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -43,6 +45,7 @@ const Dashboard = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    setIsUploading(true);
     const fileExt = file.name.split('.').pop();
     const filePath = `${user.id}/avatar.${fileExt}`;
 
@@ -53,21 +56,30 @@ const Dashboard = () => {
     if (uploadError) {
       toast.error("Erro ao enviar a foto.");
       console.error(uploadError);
+      setIsUploading(false);
       return;
     }
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const publicUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+    
+    setNewAvatarUrl(publicUrl);
+    setIsUploading(false);
+  };
+
+  const handleSaveNewAvatar = async () => {
+    if (!newAvatarUrl || !user) return;
 
     const { error: updateUserError } = await supabase
       .from('users')
-      .update({ photo_url: publicUrl })
+      .update({ photo_url: newAvatarUrl })
       .eq('id', user.id);
 
     if (updateUserError) {
       toast.error("Erro ao atualizar o perfil.");
     } else {
-      refreshUser();
+      await refreshUser();
+      setNewAvatarUrl(null);
       toast.success("Foto de perfil atualizada!");
     }
   };
@@ -92,7 +104,7 @@ const Dashboard = () => {
     return gradients[element] || "";
   };
 
-  if (loading || !user) return null; // ProtectedRoute handles loading/redirect
+  if (loading || !user) return null;
 
   return (
     <div className="min-h-screen p-6 md:p-8">
@@ -118,23 +130,33 @@ const Dashboard = () => {
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-primary shadow-glow">
-                <AvatarImage src={user.profilePicture || undefined} />
+                <AvatarImage src={newAvatarUrl || user.profilePicture || undefined} />
                 <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>
                   {user.element ? getElementEmoji(user.element) : '?'}
                 </AvatarFallback>
               </Avatar>
-              <label 
-                htmlFor="profile-picture" 
-                className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
-              >
-                <Camera className="w-4 h-4" />
-              </label>
+              {newAvatarUrl ? (
+                <button
+                  onClick={handleSaveNewAvatar}
+                  className="absolute bottom-0 right-0 bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
+                >
+                  <Save className="w-4 h-4" />
+                </button>
+              ) : (
+                <label 
+                  htmlFor="profile-picture" 
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
+                >
+                  <Camera className="w-4 h-4" />
+                </label>
+              )}
               <input 
                 id="profile-picture" 
                 type="file" 
                 accept="image/*" 
                 className="hidden"
                 onChange={handleProfilePictureUpload}
+                disabled={isUploading}
               />
             </div>
             

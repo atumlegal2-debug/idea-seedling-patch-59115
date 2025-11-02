@@ -93,7 +93,7 @@ const ProfessorEditProfile = () => {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-primary shadow-glow">
-                  <AvatarImage src={avatarUrl || undefined} />
+                  <AvatarImage key={avatarUrl} src={avatarUrl || undefined} />
                   <AvatarFallback className="text-4xl font-heading bg-muted">?</AvatarFallback>
                 </Avatar>
                 <label 
