@@ -37,7 +37,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // We no longer auto-login, just finish the loading state.
     setLoading(false);
   }, []);
   
@@ -49,24 +48,37 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             .eq('id', user.id)
             .single();
         if (data && !error) {
-            const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url };
+            const appUser: AppUser = { 
+              ...data, 
+              isProfessor: data.is_professor, 
+              profilePicture: data.photo_url 
+                ? `${data.photo_url.split('?')[0]}?t=${new Date().getTime()}` 
+                : null 
+            };
             setUser(appUser);
         }
     }
   }
 
   const login = (userToLogin: AppUser, saveProfile: boolean) => {
-    setUser(userToLogin);
+    const userWithCacheBustedPic = {
+      ...userToLogin,
+      profilePicture: userToLogin.profilePicture
+        ? `${userToLogin.profilePicture.split('?')[0]}?t=${new Date().getTime()}`
+        : null,
+    };
+    setUser(userWithCacheBustedPic);
+
     if (saveProfile) {
       const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
-      const profileToSave = {
-          username: userToLogin.username,
-          name: userToLogin.name,
-          profilePicture: userToLogin.profilePicture,
-          isProfessor: userToLogin.isProfessor,
-          element: userToLogin.element,
+      const profileToSave: SavedProfile = {
+          username: userWithCacheBustedPic.username,
+          name: userWithCacheBustedPic.name,
+          profilePicture: userWithCacheBustedPic.profilePicture,
+          isProfessor: userWithCacheBustedPic.isProfessor,
+          element: userWithCacheBustedPic.element,
       };
-      const existingProfileIndex = savedProfiles.findIndex(p => p.username === userToLogin.username);
+      const existingProfileIndex = savedProfiles.findIndex(p => p.username === userWithCacheBustedPic.username);
       if (existingProfileIndex > -1) {
           savedProfiles[existingProfileIndex] = profileToSave;
       } else {
@@ -91,7 +103,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
 
-      // Also update localStorage to keep it in sync
       const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
       const profileIndex = savedProfiles.findIndex(p => p.username === updatedUser.username);
       
