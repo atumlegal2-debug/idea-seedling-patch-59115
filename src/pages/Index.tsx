@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import waterIcon from "@/assets/water-element.png";
@@ -41,6 +42,7 @@ const Index = () => {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   
   const [loginUsername, setLoginUsername] = useState("");
+  const [saveProfile, setSaveProfile] = useState(true);
   
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -84,7 +86,7 @@ const Index = () => {
     }
     
     const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url };
-    login(appUser);
+    login(appUser, saveProfile);
     navigate(appUser.isProfessor ? "/professor" : "/dashboard");
   };
 
@@ -124,7 +126,7 @@ const Index = () => {
     }
     
     const appUser: AppUser = { ...newUser, isProfessor: false, profilePicture: newUser.photo_url };
-    login(appUser);
+    login(appUser, true);
     toast.success("Conta criada com sucesso!");
     navigate("/dashboard");
   };
@@ -221,6 +223,11 @@ const Index = () => {
                   value={loginUsername}
                   onType={setLoginUsername}
                 />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch id="save-profile" checked={saveProfile} onCheckedChange={setSaveProfile} />
+                <Label htmlFor="save-profile">Salvar perfil para acesso rápido</Label>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

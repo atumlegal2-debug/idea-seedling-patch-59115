@@ -23,7 +23,7 @@ interface SavedProfile {
 interface UserContextType {
   user: AppUser | null;
   loading: boolean;
-  login: (user: AppUser) => void;
+  login: (user: AppUser, saveProfile: boolean) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
   removeProfile: (username: string) => void;
@@ -54,23 +54,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const login = (userToLogin: AppUser) => {
+  const login = (userToLogin: AppUser, saveProfile: boolean) => {
     setUser(userToLogin);
-    const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
-    const profileToSave = {
-        username: userToLogin.username,
-        name: userToLogin.name,
-        profilePicture: userToLogin.profilePicture,
-        isProfessor: userToLogin.isProfessor,
-        element: userToLogin.element,
-    };
-    const existingProfileIndex = savedProfiles.findIndex(p => p.username === userToLogin.username);
-    if (existingProfileIndex > -1) {
-        savedProfiles[existingProfileIndex] = profileToSave;
-    } else {
-        savedProfiles.push(profileToSave);
+    if (saveProfile) {
+      const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
+      const profileToSave = {
+          username: userToLogin.username,
+          name: userToLogin.name,
+          profilePicture: userToLogin.profilePicture,
+          isProfessor: userToLogin.isProfessor,
+          element: userToLogin.element,
+      };
+      const existingProfileIndex = savedProfiles.findIndex(p => p.username === userToLogin.username);
+      if (existingProfileIndex > -1) {
+          savedProfiles[existingProfileIndex] = profileToSave;
+      } else {
+          savedProfiles.push(profileToSave);
+      }
+      localStorage.setItem("savedProfiles", JSON.stringify(savedProfiles));
     }
-    localStorage.setItem("savedProfiles", JSON.stringify(savedProfiles));
   };
 
   const logout = () => {
