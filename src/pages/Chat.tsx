@@ -2,14 +2,14 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Park, BookOpen, Home } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import heroImage from "@/assets/academy-hero-enhanced.jpg";
 
 interface Message {
   id: number;
@@ -19,6 +19,7 @@ interface Message {
   users: {
     name: string;
     photo_url: string | null;
+    element: string | null;
   };
 }
 
@@ -41,7 +42,7 @@ const Chat = () => {
     if (!locationId) return;
     const { data, error } = await supabase
       .from('messages')
-      .select('*, users(name, photo_url)')
+      .select('*, users(name, photo_url, element)')
       .eq('location_name', locationId)
       .order('created_at', { ascending: true });
 
@@ -49,7 +50,7 @@ const Chat = () => {
       toast.error('Erro ao carregar mensagens.');
       console.error(error);
     } else {
-      setMessages(data as Message[]);
+      setMessages(data as any[]);
     }
     setLoading(false);
   }, [locationId]);
@@ -97,72 +98,112 @@ const Chat = () => {
     if (error) {
       toast.error('Erro ao enviar mensagem.');
       console.error(error);
-      setNewMessage(content); // Restore message on error
+      setNewMessage(content);
     }
   };
 
+  const getElementEmoji = (element: string | null) => {
+    if (!element) return "?";
+    const emojis: Record<string, string> = { água: "🌊", fogo: "🔥", terra: "🌱", ar: "💨" };
+    return emojis[element] || "?";
+  };
+
+  const getLocationIcon = () => {
+    if (locationId?.includes('floresta')) return <Park className="w-6 h-6 text-green-400" />;
+    if (locationId?.includes('sala')) return <BookOpen className="w-6 h-6 text-primary" />;
+    if (locationId?.includes('dormitorio')) return <Home className="w-6 h-6 text-secondary" />;
+    return <Park className="w-6 h-6 text-muted-foreground" />;
+  };
+
   return (
-    <div className="min-h-screen p-4 md:p-8 flex flex-col">
-      <div className="max-w-4xl w-full mx-auto flex flex-col flex-1">
-        <div className="flex items-center gap-4 mb-4">
-          <Button variant="outline" onClick={() => navigate('/locais')} className="gap-2">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Button>
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-gradient-arcane">{locationName}</h1>
+    <div className="relative h-screen w-full flex flex-col bg-background">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-10" />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col h-full max-w-2xl mx-auto w-full">
+        {/* Header */}
+        <header className="flex items-center bg-background/80 backdrop-blur-sm p-4 pb-3 justify-between shrink-0 border-b border-border">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center size-10 bg-muted rounded-full">
+                {getLocationIcon()}
+              </div>
+              <h2 className="text-foreground text-lg font-bold font-heading leading-tight tracking-wide">{locationName}</h2>
+            </div>
           </div>
+        </header>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {loading ? (
+            <p className="text-center text-muted-foreground">Carregando chat...</p>
+          ) : messages.length === 0 ? (
+            <p className="text-center text-muted-foreground font-heading">Seja o primeiro a enviar uma mensagem!</p>
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className={`flex items-end gap-3 ${msg.user_id === user?.id ? 'justify-end' : ''}`}>
+                {/* Other User's Message */}
+                {msg.user_id !== user?.id && (
+                  <>
+                    <Avatar className="w-10 h-10 shrink-0 border-2 border-primary/50">
+                      <AvatarImage src={msg.users.photo_url || undefined} />
+                      <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1 items-start max-w-md">
+                      <p className="text-secondary text-sm font-bold font-heading ml-3">{msg.users.name}</p>
+                      <div className="text-base font-normal leading-normal flex rounded-2xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                       <p className="text-xs text-muted-foreground mt-1 ml-3">
+                        {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                  </>
+                )}
+                {/* Current User's Message */}
+                {msg.user_id === user?.id && (
+                  <>
+                    <div className="flex flex-col gap-1 items-end max-w-md">
+                      <p className="text-primary text-sm font-bold font-heading mr-3">{msg.users.name}</p>
+                      <div className="text-base font-normal leading-normal flex rounded-2xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                       <p className="text-xs text-muted-foreground mt-1 mr-3">
+                        {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <Avatar className="w-10 h-10 shrink-0 border-2 border-secondary">
+                      <AvatarImage src={user?.profilePicture || undefined} />
+                      <AvatarFallback>{getElementEmoji(user?.element)}</AvatarFallback>
+                    </Avatar>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
-        <Card className="flex-1 flex flex-col p-4 md:p-6 border-2 border-primary/20 bg-card/80 backdrop-blur">
-          <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-            {loading ? (
-              <p className="text-center text-muted-foreground">Carregando chat...</p>
-            ) : messages.length === 0 ? (
-              <p className="text-center text-muted-foreground">Seja o primeiro a enviar uma mensagem!</p>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className={`flex gap-3 items-start ${msg.user_id === user?.id ? 'justify-end' : ''}`}>
-                  {msg.user_id !== user?.id && (
-                    <Avatar className="w-10 h-10 border-2 border-primary/50">
-                      <AvatarImage src={msg.users.photo_url || undefined} />
-                      <AvatarFallback>{msg.users.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className={`max-w-xs md:max-w-md ${msg.user_id === user?.id ? 'text-right' : ''}`}>
-                    <p className={`text-xs text-muted-foreground mb-1 ${msg.user_id === user?.id ? 'mr-2' : 'ml-2'}`}>
-                      {msg.users.name}
-                    </p>
-                    <div className={`px-4 py-2 rounded-2xl ${msg.user_id === user?.id ? 'bg-gradient-arcane text-white rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                    </div>
-                    <p className={`text-xs text-muted-foreground mt-1 ${msg.user_id === user?.id ? 'mr-2' : 'ml-2'}`}>
-                      {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                  {msg.user_id === user?.id && (
-                    <Avatar className="w-10 h-10 border-2 border-secondary">
-                      <AvatarImage src={user?.profilePicture || undefined} />
-                      <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <form onSubmit={handleSendMessage} className="mt-4 flex gap-2 pt-4 border-t border-border">
+        {/* Input Bar */}
+        <div className="bg-background/80 backdrop-blur-sm p-4 pt-2 border-t border-border shrink-0">
+          <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-muted/50 border border-border rounded-full px-2 py-1.5">
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Digite sua mensagem..."
-              className="text-base"
+              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground border-none focus:ring-0 p-2 text-base"
             />
-            <Button type="submit" size="icon" className="bg-gradient-arcane hover:opacity-90 shadow-glow flex-shrink-0">
+            <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-10 h-10 shadow-glow hover:opacity-90">
               <Send className="w-5 h-5" />
             </Button>
           </form>
-        </Card>
+        </div>
       </div>
     </div>
   );
