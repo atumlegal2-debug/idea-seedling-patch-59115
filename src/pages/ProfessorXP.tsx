@@ -18,6 +18,7 @@ interface Student {
   xp: number;
   rank: string;
   photo_url: string | null;
+  updated_at: string;
 }
 
 const ProfessorXP = () => {
@@ -118,12 +119,12 @@ const ProfessorXP = () => {
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex items-center gap-4 flex-1">
                     <Avatar className="w-16 h-16 border-4 border-primary shadow-glow">
-                      <AvatarImage src={user.photo_url ? `${user.photo_url}?t=${new Date().getTime()}` : undefined} className="object-cover" />
+                      <AvatarImage src={user.photo_url ? `${user.photo_url}?t=${new Date(user.updated_at).getTime()}` : undefined} className="object-cover" />
                       <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>{user.element ? getElementEmoji(user.element) : '?'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-heading text-xl font-bold">{user.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">@{user.username}</p>
+                      <p className="text-sm text-muted-foreground mb-2">@{user.username.replace(/\d{4}$/, '')}</p>
                       <div className="flex gap-2 flex-wrap">
                         <span className={`px-3 py-1 rounded-full ${getElementGradient(user.element || '')} text-white text-sm font-heading`}>
                           {user.element ? `${getElementEmoji(user.element)} ${user.element.charAt(0).toUpperCase() + user.element.slice(1)}` : 'Sem Elemento'}

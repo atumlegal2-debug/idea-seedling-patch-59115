@@ -22,6 +22,7 @@ interface Message {
     name: string;
     photo_url: string | null;
     element: string | null;
+    updated_at: string;
   };
 }
 
@@ -94,7 +95,7 @@ const Chat = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('messages')
-      .select('*, users(name, photo_url, element)')
+      .select('*, users(name, photo_url, element, updated_at)')
       .eq('location_name', locationId)
       .order('created_at', { ascending: false });
 
@@ -127,7 +128,7 @@ const Chat = () => {
 
       const { data: userData, error } = await supabase
         .from('users')
-        .select('name, photo_url, element')
+        .select('name, photo_url, element, updated_at')
         .eq('id', newMessagePartial.user_id)
         .single();
       
@@ -173,7 +174,7 @@ const Chat = () => {
       content,
       created_at: new Date().toISOString(),
       user_id: user.id,
-      users: { name: user.name, photo_url: user.profilePicture, element: user.element },
+      users: { name: user.name, photo_url: user.profilePicture, element: user.element, updated_at: user.updated_at },
     };
 
     setMessages(current => [optimisticMessage, ...current]);
@@ -249,7 +250,7 @@ const Chat = () => {
                 {msg.user_id !== user?.id && (
                   <>
                     <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-primary/50">
-                      <AvatarImage src={msg.users.photo_url ? `${msg.users.photo_url}?t=${new Date().getTime()}` : undefined} />
+                      <AvatarImage src={msg.users.photo_url ? `${msg.users.photo_url}?t=${new Date(msg.users.updated_at).getTime()}` : undefined} />
                       <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1 items-start max-w-md">

@@ -25,6 +25,7 @@ interface ManagedUser {
   element: "água" | "terra" | "fogo" | "ar" | null;
   photo_url: string | null;
   is_professor: boolean;
+  updated_at: string;
 }
 
 const AdminUsers = () => {
@@ -104,12 +105,12 @@ const AdminUsers = () => {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="w-12 h-12 border-2 border-primary">
-                    <AvatarImage src={user.photo_url ? `${user.photo_url}?t=${new Date().getTime()}` : undefined} />
+                    <AvatarImage src={user.photo_url ? `${user.photo_url}?t=${new Date(user.updated_at).getTime()}` : undefined} />
                     <AvatarFallback className="bg-muted">{getElementEmoji(user.element)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-bold font-heading">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">@{user.username}</p>
+                    <p className="text-sm text-muted-foreground">@{user.username.replace(/\d{4}$/, '')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">

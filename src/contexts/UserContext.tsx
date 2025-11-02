@@ -10,6 +10,7 @@ export interface AppUser {
   rank: string;
   profilePicture: string | null;
   isProfessor: boolean;
+  updated_at: string;
 }
 
 interface SavedProfile {
@@ -51,8 +52,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const appUser: AppUser = { 
               ...data, 
               isProfessor: data.is_professor, 
+              updated_at: data.updated_at,
               profilePicture: data.photo_url 
-                ? `${data.photo_url.split('?')[0]}?t=${new Date().getTime()}` 
+                ? `${data.photo_url.split('?')[0]}?t=${new Date(data.updated_at).getTime()}` 
                 : null 
             };
             setUser(appUser);
@@ -64,7 +66,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const userWithCacheBustedPic = {
       ...userToLogin,
       profilePicture: userToLogin.profilePicture
-        ? `${userToLogin.profilePicture.split('?')[0]}?t=${new Date().getTime()}`
+        ? `${userToLogin.profilePicture.split('?')[0]}?t=${new Date(userToLogin.updated_at).getTime()}`
         : null,
     };
     setUser(userWithCacheBustedPic);

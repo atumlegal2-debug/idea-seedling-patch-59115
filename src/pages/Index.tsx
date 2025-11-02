@@ -85,7 +85,7 @@ const Index = () => {
       return;
     }
     
-    const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url };
+    const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url, updated_at: data.updated_at };
     login(appUser, saveProfile);
     navigate(appUser.isProfessor ? "/professor" : "/dashboard");
   };
@@ -125,7 +125,7 @@ const Index = () => {
       return;
     }
     
-    const appUser: AppUser = { ...newUser, isProfessor: false, profilePicture: newUser.photo_url };
+    const appUser: AppUser = { ...newUser, isProfessor: false, profilePicture: newUser.photo_url, updated_at: newUser.updated_at };
     login(appUser, true);
     toast.success("Conta criada com sucesso!");
     navigate("/dashboard");
@@ -195,7 +195,7 @@ const Index = () => {
                     </Avatar>
                     <div>
                       <p className="font-bold font-heading">{profile.name}</p>
-                      <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                      <p className="text-sm text-muted-foreground">@{profile.username.replace(/\d{4}$/, '')}</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveProfile(profile.username)}>
