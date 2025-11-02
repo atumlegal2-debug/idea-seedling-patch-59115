@@ -56,11 +56,16 @@ const ProfessorEditProfile = () => {
     const fileName = `${user.id}.${fileExt}`;
 
     try {
+      // Remove existing avatar file if exists
+      await supabase.storage
+        .from('avatars')
+        .remove([fileName]);
+
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { 
-          upsert: true,
+          upsert: false,
           cacheControl: '3600'
         });
 
