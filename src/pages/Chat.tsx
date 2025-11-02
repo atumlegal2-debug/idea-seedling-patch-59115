@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, Send, Trees, BookOpen, Home, MoreVertical, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, isSameDay, isToday, isYesterday } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import { cn } from '@/lib/utils';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { locationThemes, getLocationConfig } from './locationThemes';
 
 interface Message {
   id: number;
@@ -45,7 +45,50 @@ const Chat = () => {
 
   const locationName = locationId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-  const theme = getLocationConfig(locationId);
+  const locationConfig = {
+    'floresta': {
+        overlay: 'bg-gradient-to-b from-emerald-950/80 via-green-950/90 to-black/95',
+        header: 'bg-emerald-950/60 border-b-emerald-400/30',
+        inputContainer: 'bg-emerald-950/40 border-t-emerald-400/30',
+        inputForm: 'bg-emerald-950/50 border-emerald-400/40'
+    },
+    'sala-wooyoung': {
+        overlay: 'bg-gradient-to-b from-sky-950/80 via-blue-950/90 to-black/95',
+        header: 'bg-sky-950/60 border-b-sky-400/30',
+        inputContainer: 'bg-sky-950/40 border-t-sky-400/30',
+        inputForm: 'bg-sky-950/50 border-sky-400/40'
+    },
+    'sala-romeo': {
+        overlay: 'bg-gradient-to-b from-rose-950/80 via-red-950/90 to-black/95',
+        header: 'bg-rose-950/60 border-b-rose-400/30',
+        inputContainer: 'bg-rose-950/40 border-t-rose-400/30',
+        inputForm: 'bg-rose-950/50 border-rose-400/40'
+    },
+    'sala-niki': {
+        overlay: 'bg-gradient-to-b from-amber-950/80 via-yellow-950/90 to-black/95',
+        header: 'bg-amber-950/60 border-b-amber-400/30',
+        inputContainer: 'bg-amber-950/40 border-t-amber-400/30',
+        inputForm: 'bg-amber-950/50 border-amber-400/40'
+    },
+    'default': {
+        overlay: 'bg-gradient-to-b from-background/90 via-background/80 to-background/90',
+        header: 'bg-background/80 border-b-border',
+        inputContainer: 'bg-background/80 border-t-border',
+        inputForm: 'bg-muted/50 border-border'
+    }
+  };
+
+  const getLocationConfig = () => {
+    switch (locationId) {
+        case 'floresta': return locationConfig.floresta;
+        case 'sala-wooyoung': return locationConfig['sala-wooyoung'];
+        case 'sala-romeo': return locationConfig['sala-romeo'];
+        case 'sala-niki': return locationConfig['sala-niki'];
+        default: return locationConfig.default;
+    }
+  };
+
+  const currentConfig = getLocationConfig();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,33 +103,60 @@ const Chat = () => {
       .eq('location_name', locationId)
       .order('created_at', { ascending: true });
 
-    if (error) toast.error('Erro ao carregar mensagens.');
-    else setMessages(data as any[] || []);
+    if (error) {
+      toast.error('Erro ao carregar mensagens.');
+      console.error(error);
+    } else {
+      setMessages(data as any[]);
+    }
     setLoading(false);
   }, [locationId]);
 
-  useEffect(() => { fetchMessages(); }, [fetchMessages]);
-  useEffect(() => { scrollToBottom(); }, [messages, loading]);
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (!locationId || !user) return;
 
-    const channel = supabase.channel(`chat-realtime:${locationId}`, { config: { broadcast: { self: false } } });
+    const channel = supabase.channel(`chat-realtime:${locationId}`, {
+      config: {
+        broadcast: { self: false },
+      },
+    });
     channelRef.current = channel;
 
     const handleNewMessage = async (payload: any) => {
-      const { data: userData } = await supabase.from('users').select('name, photo_url, element').eq('id', payload.new.user_id).single();
-      setMessages(current => [...current, { ...payload.new, users: userData }]);
+      const newMessagePartial = payload.new as Omit<Message, 'users'>;
+      if (newMessagePartial.user_id === user.id) return;
+
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('name, photo_url, element')
+        .eq('id', newMessagePartial.user_id)
+        .single();
+      
+      if (error || !userData) return;
+
+      const newMessage: Message = { ...newMessagePartial, users: userData };
+      setMessages(current => [...current, newMessage]);
     };
 
     const handleTypingEvent = ({ payload }: { payload: TypingUser }) => {
       const existingTimeout = typingTimeoutRef.current.get(payload.id);
       if (existingTimeout) clearTimeout(existingTimeout);
+
       setTypingUsers(current => current.some(u => u.id === payload.id) ? current : [...current, payload]);
+
       const newTimeout = window.setTimeout(() => {
         setTypingUsers(current => current.filter(u => u.id !== payload.id));
         typingTimeoutRef.current.delete(payload.id);
       }, 3000);
+
       typingTimeoutRef.current.set(payload.id, newTimeout);
     };
 
@@ -105,11 +175,24 @@ const Chat = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !user || !locationId) return;
+
     const content = newMessage.trim();
+    const optimisticMessage: Message = {
+      id: Date.now(),
+      content,
+      created_at: new Date().toISOString(),
+      user_id: user.id,
+      users: { name: user.name, photo_url: user.profilePicture, element: user.element },
+    };
+
+    setMessages(current => [...current, optimisticMessage]);
     setNewMessage('');
+
     const { error } = await supabase.from('messages').insert({ content, user_id: user.id, location_name: locationId });
+
     if (error) {
       toast.error('Erro ao enviar mensagem.');
+      setMessages(current => current.filter(m => m.id !== optimisticMessage.id));
       setNewMessage(content);
     }
   };
@@ -117,127 +200,114 @@ const Chat = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     if (channelRef.current && user) {
-      channelRef.current.send({ type: 'broadcast', event: 'typing', payload: { name: user.name, id: user.id } });
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { name: user.name, id: user.id },
+      });
     }
   };
 
-  const getElementEmoji = (element: string | null) => ({ água: "🌊", fogo: "🔥", terra: "🌱", ar: "💨" }[element || ''] || "?");
-  const getLocationIcon = () => {
-    if (locationId?.includes('floresta')) return <Trees className="w-6 h-6" />;
-    if (locationId?.includes('sala')) return <BookOpen className="w-6 h-6" />;
-    if (locationId?.includes('dormitorio')) return <Home className="w-6 h-6" />;
-    return <Trees className="w-6 h-6" />;
+  const getElementEmoji = (element: string | null) => {
+    if (!element) return "?";
+    const emojis: Record<string, string> = { água: "🌊", fogo: "🔥", terra: "🌱", ar: "💨" };
+    return emojis[element] || "?";
   };
 
-  const renderMessages = () => {
-    const messageElements: JSX.Element[] = [];
-    let lastDate: Date | null = null;
-
-    messages.forEach((msg, index) => {
-      const currentDate = new Date(msg.created_at);
-      if (!lastDate || !isSameDay(currentDate, lastDate)) {
-        messageElements.push(<DateSeparator key={`date-${msg.id}`} date={currentDate} />);
-      }
-      lastDate = currentDate;
-
-      const prevMsg = messages[index - 1];
-      const isFirstInGroup = !prevMsg || prevMsg.user_id !== msg.user_id || !isSameDay(new Date(prevMsg.created_at), currentDate);
-
-      messageElements.push(
-        <ChatMessage
-          key={msg.id}
-          message={msg}
-          isOwnMessage={msg.user_id === user?.id}
-          isFirstInGroup={isFirstInGroup}
-          theme={theme}
-        />
-      );
-    });
-    return messageElements;
+  const getLocationIcon = () => {
+    if (locationId?.includes('floresta')) return <Trees className="w-6 h-6 text-green-400" />;
+    if (locationId?.includes('sala')) return <BookOpen className="w-6 h-6 text-primary" />;
+    if (locationId?.includes('dormitorio')) return <Home className="w-6 h-6 text-secondary" />;
+    return <Trees className="w-6 h-6 text-muted-foreground" />;
   };
 
   return (
     <div className="relative h-screen w-full flex flex-col bg-background">
       <div className="absolute inset-0 z-0">
-        <img src={theme.bgImage} alt="Cenário do chat" className="h-full w-full object-cover" />
-        <div className={cn("absolute inset-0", theme.overlay)} />
+        <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-20" />
+        <div className={cn("absolute inset-0", currentConfig.overlay)} />
       </div>
 
-      <div className="relative z-10 flex flex-col h-full max-w-lg mx-auto w-full">
-        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-2 justify-between shrink-0 border-b", theme.header)}>
+      <div className="relative z-10 flex flex-col h-full max-w-2xl mx-auto w-full">
+        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-2 justify-between shrink-0 border-b", currentConfig.header)}>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10 text-white"><ArrowLeft className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center size-10 rounded-full bg-black/20">{getLocationIcon()}</div>
-              <h2 className="text-white text-lg font-bold font-heading tracking-wide">{locationName}</h2>
+              <div className="flex items-center justify-center size-10 bg-muted rounded-full">{getLocationIcon()}</div>
+              <h2 className="text-foreground text-lg font-bold font-heading leading-tight tracking-wide">{locationName}</h2>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-white"><MoreVertical className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" className="h-10 w-10"><MoreVertical className="w-5 h-5" /></Button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {loading ? <p className="text-center text-muted-foreground m-auto">Carregando chat...</p> : renderMessages()}
-          <div className="h-6 text-sm text-white/70 italic text-center">
-            {typingUsers.length > 0 && `${typingUsers.map(u => u.name).join(', ')} está digitando...`}
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+          {loading ? (
+            <p className="text-center text-muted-foreground m-auto">Carregando chat...</p>
+          ) : messages.length === 0 ? (
+            <p className="text-center text-muted-foreground font-heading m-auto">Seja o primeiro a enviar uma mensagem!</p>
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className={`flex items-end gap-3 ${msg.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
+                {msg.user_id !== user?.id && (
+                  <>
+                    <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-primary/50">
+                      <AvatarImage src={msg.users.photo_url || undefined} />
+                      <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1 items-start max-w-md">
+                      <p className="text-secondary text-sm font-bold font-heading ml-3">{msg.users.name}</p>
+                      <div className="text-base font-normal leading-normal flex rounded-xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 ml-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
+                    </div>
+                  </>
+                )}
+                {msg.user_id === user?.id && (
+                  <>
+                    <div className="flex flex-col gap-1 items-end max-w-md">
+                      <p className="text-primary text-sm font-bold font-heading mr-3">{msg.users.name}</p>
+                      <div className="text-base font-normal leading-normal flex rounded-xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 mr-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
+                    </div>
+                    <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-secondary">
+                      <AvatarImage src={user?.profilePicture || undefined} />
+                      <AvatarFallback>{getElementEmoji(user?.element)}</AvatarFallback>
+                    </Avatar>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+          <div className="h-6 text-sm text-muted-foreground italic">
+            {typingUsers.length > 0 && (
+              `${typingUsers.map(u => u.name).join(', ')} ${typingUsers.length > 1 ? 'estão' : 'está'} digitando...`
+            )}
           </div>
           <div ref={messagesEndRef} />
         </div>
 
-        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", theme.inputContainer)}>
-          <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2 border rounded-full px-2 py-1.5", theme.inputForm)}>
-            <Button type="button" variant="ghost" size="icon" className="text-[#13ec37] hover:bg-primary/20 rounded-full shrink-0"><PlusCircle className="w-5 h-5" /></Button>
-            <Input value={newMessage} onChange={handleInputChange} placeholder="Digite sua runa..." className={cn("flex-1 bg-transparent text-white border-none focus:ring-0 p-2 text-base", theme.inputPlaceholder)} />
-            <Button type="submit" size="icon" className={cn("text-white rounded-full shrink-0 w-10 h-10", theme.myBubble)}><Send className="w-5 h-5" /></Button>
+        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
+          <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2 border rounded-full px-2 py-1.5", currentConfig.inputForm)}>
+            <Button type="button" variant="ghost" size="icon" className="text-primary hover:bg-primary/20 rounded-full shrink-0">
+              <PlusCircle className="w-5 h-5" />
+            </Button>
+            <Input
+              value={newMessage}
+              onChange={handleInputChange}
+              placeholder="Digite sua runa..."
+              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground border-none focus:ring-0 p-2 text-base"
+            />
+            <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-10 h-10 shadow-glow hover:opacity-90">
+              <Send className="w-5 h-5" />
+            </Button>
           </form>
         </div>
       </div>
-    </div>
-  );
-};
-
-const DateSeparator = ({ date }: { date: Date }) => {
-  const formatDate = () => {
-    if (isToday(date)) return 'Hoje';
-    if (isYesterday(date)) return 'Ontem';
-    return format(date, "d 'de' MMMM", { locale: ptBR });
-  };
-  return (
-    <div className="flex items-center justify-center my-4">
-      <span className="px-3 py-1 text-xs font-bold text-white/80 bg-black/30 rounded-full">{formatDate()}</span>
-    </div>
-  );
-};
-
-const ChatMessage = ({ message, isOwnMessage, isFirstInGroup, theme }: { message: Message; isOwnMessage: boolean; isFirstInGroup: boolean; theme: any }) => {
-  const getElementEmoji = (element: string | null) => ({ água: "🌊", fogo: "🔥", terra: "🌱", ar: "💨" }[element || ''] || "?");
-  
-  return (
-    <div className={cn('flex items-end gap-3', isOwnMessage ? 'justify-end' : '', isFirstInGroup && 'mt-4')}>
-      {!isOwnMessage && (
-        <Avatar className={cn('w-10 h-10 shrink-0 self-start', !isFirstInGroup && 'opacity-0')}>
-          <AvatarImage src={message.users.photo_url || undefined} />
-          <AvatarFallback>{getElementEmoji(message.users.element)}</AvatarFallback>
-        </Avatar>
-      )}
-      <div className={cn('flex flex-col gap-1', isOwnMessage ? 'items-end' : 'items-start')}>
-        {isFirstInGroup && (
-          <p className={cn("text-[13px] font-bold font-heading", isOwnMessage ? theme.myNameColor : theme.nameColor)}>
-            {message.users.name}
-          </p>
-        )}
-        <div className={cn("flex items-end gap-2 text-base leading-normal rounded-lg px-4 py-3 max-w-xs md:max-w-sm break-words", 
-          isOwnMessage ? `rounded-br-none ${theme.myBubble}` : `rounded-bl-none ${theme.otherBubble}`
-        )}>
-          <p className="whitespace-pre-wrap">{message.content}</p>
-          <span className="text-[10px] opacity-70 mt-1 shrink-0">{format(new Date(message.created_at), 'HH:mm')}</span>
-        </div>
-      </div>
-      {isOwnMessage && (
-        <Avatar className={cn('w-10 h-10 shrink-0 self-start', !isFirstInGroup && 'opacity-0')}>
-          <AvatarImage src={message.users.photo_url || undefined} />
-          <AvatarFallback>{getElementEmoji(message.users.element)}</AvatarFallback>
-        </Avatar>
-      )}
     </div>
   );
 };
