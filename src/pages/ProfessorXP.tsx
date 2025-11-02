@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,18 +31,34 @@ const ProfessorXP = () => {
     }
   }, [professorUser, loading, navigate]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     const { data, error } = await supabase.from('users').select('*');
     if (error) {
       toast.error("Erro ao carregar alunos.");
     } else {
       setUsers(data || []);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUsers();
-  }, []);
+
+    const channel = supabase
+      .channel('public:users')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'users' },
+        (payload) => {
+          console.log('Atualização na tabela de usuários, recarregando...', payload);
+          loadUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadUsers]);
 
   const addXP = async (userId: string, amount: number) => {
     const { error } = await supabase.rpc('add_xp', {
@@ -53,7 +69,7 @@ const ProfessorXP = () => {
       toast.error("Erro ao atualizar XP.");
     } else {
       toast.success("XP atualizado!");
-      loadUsers();
+      // The real-time listener will handle the UI update
     }
   };
 
@@ -75,7 +91,7 @@ const ProfessorXP = () => {
       toast.error("Erro ao definir XP.");
     } else {
       toast.success("XP definido!");
-      loadUsers();
+      // The real-time listener will handle the UI update
     }
   };
 
@@ -102,7 +118,7 @@ const ProfessorXP = () => {
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex items-center gap-4 flex-1">
                     <Avatar className="w-16 h-16 border-4 border-primary shadow-glow">
-                      <AvatarImage src={user.photo_url || undefined} />
+                      <AvatarImage src={user.photo_url || undefined} className="object-cover" />
                       <AvatarFallback className={`${getElementGradient(user.element || '')} text-white text-2xl font-heading`}>{user.element ? getElementEmoji(user.element) : '?'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
