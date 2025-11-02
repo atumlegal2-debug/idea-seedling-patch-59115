@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
@@ -262,12 +261,10 @@ const Index = () => {
                         Insira a senha de administrador para continuar.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <Input 
-                      type="password"
-                      placeholder="********"
+                    <VirtualKeyboard
                       value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                      onType={setAdminPassword}
+                      placeholder="********"
                     />
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>

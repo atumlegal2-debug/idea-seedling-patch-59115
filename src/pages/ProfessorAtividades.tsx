@@ -2,15 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Plus, Trash2, X, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 interface Statement {
   id: string;
@@ -175,15 +174,15 @@ const ProfessorAtividades = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-lg font-heading">Título</Label>
-                <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Elementos da Natureza" className="text-base" />
+                <VirtualKeyboard id="title" value={title} onType={setTitle} placeholder="Ex: Elementos da Natureza" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="text" className="text-lg font-heading">Texto da Atividade</Label>
-                <Textarea id="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Escreva o conteúdo da aula aqui..." className="min-h-[200px] text-base" />
+                <VirtualKeyboard id="text" value={text} onType={setText} placeholder="Escreva o conteúdo da aula aqui..." />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="xp" className="text-lg font-heading">XP ao Completar</Label>
-                <Input id="xp" type="number" value={xpReward} onChange={(e) => setXpReward(Number(e.target.value))} min={1} className="text-base" />
+                <VirtualKeyboard id="xp" value={xpReward.toString()} onType={(val) => setXpReward(Number(val) || 0)} placeholder="10" />
               </div>
               <div className="border-t pt-6">
                 <h3 className="font-heading text-xl font-bold mb-4">Adicionar Pergunta</h3>
@@ -195,12 +194,14 @@ const ProfessorAtividades = () => {
                       <div className="flex items-center space-x-2"><RadioGroupItem value="multiple" id="multiple" /><Label htmlFor="multiple">Múltipla Escolha</Label></div>
                     </RadioGroup>
                   </div>
-                  <div className="space-y-2"><Label>Pergunta</Label><Input value={currentQuestion} onChange={(e) => setCurrentQuestion(e.target.value)} placeholder="Digite a pergunta" /></div>
+                  <div className="space-y-2"><Label>Pergunta</Label><VirtualKeyboard value={currentQuestion} onType={setCurrentQuestion} placeholder="Digite a pergunta" /></div>
                   {currentQuestionType === "true-false" ? (
                     <div className="space-y-3 p-4 rounded-lg bg-muted/20 border border-border/50">
                       <Label className="text-base font-heading">Afirmações</Label>
                       <div className="flex gap-2">
-                        <Input value={newStatementText} onChange={(e) => setNewStatementText(e.target.value)} placeholder="Digite uma afirmação" onKeyPress={(e) => e.key === "Enter" && addStatement()} />
+                        <div className="flex-1">
+                          <VirtualKeyboard value={newStatementText} onType={setNewStatementText} placeholder="Digite uma afirmação" />
+                        </div>
                         <Button onClick={addStatement} variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
                       </div>
                       {currentStatements.map((s) => (
@@ -216,7 +217,7 @@ const ProfessorAtividades = () => {
                     <>
                       <div className="space-y-2">
                         <Label>Opções de Resposta</Label>
-                        {currentOptions.map((o, i) => <Input key={i} value={o} onChange={(e) => setCurrentOptions(currentOptions.map((opt, idx) => idx === i ? e.target.value : opt))} placeholder={`Opção ${i + 1}`} />)}
+                        {currentOptions.map((o, i) => <VirtualKeyboard key={i} value={o} onType={(val) => setCurrentOptions(currentOptions.map((opt, idx) => idx === i ? val : opt))} placeholder={`Opção ${i + 1}`} />)}
                       </div>
                       <div className="space-y-2">
                         <Label>Resposta Correta</Label>

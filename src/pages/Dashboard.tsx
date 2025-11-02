@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -218,7 +218,11 @@ const Dashboard = () => {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader><AlertDialogTitle>Acesso Restrito</AlertDialogTitle><AlertDialogDescription>Insira a senha para acessar os locais da academia.</AlertDialogDescription></AlertDialogHeader>
-              <Input type="password" placeholder="********" value={locationPassword} onChange={(e) => setLocationPassword(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleLocationAccess()} />
+              <VirtualKeyboard
+                value={locationPassword}
+                onType={setLocationPassword}
+                placeholder="********"
+              />
               <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleLocationAccess}>Entrar</AlertDialogAction></AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

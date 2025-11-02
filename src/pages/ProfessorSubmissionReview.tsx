@@ -5,9 +5,9 @@ import { useUser } from '@/contexts/UserContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import VirtualKeyboard from '@/components/VirtualKeyboard';
 
 const ProfessorSubmissionReview = () => {
   const { submissionId } = useParams();
@@ -159,15 +159,10 @@ const ProfessorSubmissionReview = () => {
             <div className="flex items-end gap-4">
               <div className="space-y-2 flex-1">
                 <Label htmlFor="score">Nota (0 a 10)</Label>
-                <Input
-                  id="score"
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={score}
-                  onChange={(e) => setScore(e.target.value)}
-                  className="text-lg"
-                  disabled={submission.status === 'graded'}
+                <VirtualKeyboard
+                  value={score.toString()}
+                  onType={(val) => submission.status !== 'graded' && setScore(val)}
+                  placeholder="0-10"
                 />
               </div>
               <Button

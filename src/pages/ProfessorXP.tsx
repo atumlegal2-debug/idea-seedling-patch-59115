@@ -2,13 +2,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 interface Student {
   id: string;
@@ -25,6 +25,7 @@ const ProfessorXP = () => {
   const navigate = useNavigate();
   const { user: professorUser, loading } = useUser();
   const [users, setUsers] = useState<Student[]>([]);
+  const [customXpValues, setCustomXpValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!loading && !professorUser?.isProfessor) {
@@ -149,11 +150,19 @@ const ProfessorXP = () => {
                       ))}
                     </div>
                     <div className="flex gap-2">
-                      <Input type="number" placeholder="XP customizado" id={`custom-xp-${user.username}`} className="text-sm" min={0} />
+                      <div className="flex-1">
+                        <VirtualKeyboard
+                          value={customXpValues[user.id] || ""}
+                          onType={(val) => setCustomXpValues(prev => ({ ...prev, [user.id]: val }))}
+                          placeholder="XP customizado"
+                        />
+                      </div>
                       <Button size="sm" onClick={() => {
-                        const input = document.getElementById(`custom-xp-${user.username}`) as HTMLInputElement;
-                        const amount = parseInt(input.value);
-                        if (!isNaN(amount)) { setXP(user.id, amount); input.value = ""; }
+                        const amount = parseInt(customXpValues[user.id] || '0');
+                        if (!isNaN(amount)) {
+                          setXP(user.id, amount);
+                          setCustomXpValues(prev => ({ ...prev, [user.id]: "" }));
+                        }
                       }} className="bg-gradient-arcane hover:opacity-90">Definir</Button>
                     </div>
                   </div>

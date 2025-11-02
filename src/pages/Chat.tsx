@@ -3,15 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Send, Trees, BookOpen, Home, MoreVertical, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Send, Trees, BookOpen, Home, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import { cn } from '@/lib/utils';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import VirtualKeyboard from '@/components/VirtualKeyboard';
 
 interface Message {
   id: number;
@@ -50,31 +50,31 @@ const Chat = () => {
         overlay: 'bg-gradient-to-b from-emerald-950/80 via-green-950/90 to-black/95',
         header: 'bg-emerald-950/60 border-b-emerald-400/30',
         inputContainer: 'bg-emerald-950/40 border-t-emerald-400/30',
-        inputForm: 'bg-emerald-950/50 border-emerald-400/40'
+        inputForm: 'bg-transparent border-none'
     },
     'sala-wooyoung': {
         overlay: 'bg-gradient-to-b from-sky-950/80 via-blue-950/90 to-black/95',
         header: 'bg-sky-950/60 border-b-sky-400/30',
         inputContainer: 'bg-sky-950/40 border-t-sky-400/30',
-        inputForm: 'bg-sky-950/50 border-sky-400/40'
+        inputForm: 'bg-transparent border-none'
     },
     'sala-romeo': {
         overlay: 'bg-gradient-to-b from-rose-950/80 via-red-950/90 to-black/95',
         header: 'bg-rose-950/60 border-b-rose-400/30',
         inputContainer: 'bg-rose-950/40 border-t-rose-400/30',
-        inputForm: 'bg-rose-950/50 border-rose-400/40'
+        inputForm: 'bg-transparent border-none'
     },
     'sala-niki': {
         overlay: 'bg-gradient-to-b from-amber-950/80 via-yellow-950/90 to-black/95',
         header: 'bg-amber-950/60 border-b-amber-400/30',
         inputContainer: 'bg-amber-950/40 border-t-amber-400/30',
-        inputForm: 'bg-amber-950/50 border-amber-400/40'
+        inputForm: 'bg-transparent border-none'
     },
     'default': {
         overlay: 'bg-gradient-to-b from-background/90 via-background/80 to-background/90',
         header: 'bg-background/80 border-b-border',
         inputContainer: 'bg-background/80 border-t-border',
-        inputForm: 'bg-muted/50 border-border'
+        inputForm: 'bg-transparent border-none'
     }
   };
 
@@ -189,8 +189,8 @@ const Chat = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value);
+  const handleTyping = (value: string) => {
+    setNewMessage(value);
     if (channelRef.current && user) {
       channelRef.current.send({
         type: 'broadcast',
@@ -283,17 +283,15 @@ const Chat = () => {
         </div>
 
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
-          <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2 border rounded-full px-2 py-1.5", currentConfig.inputForm)}>
-            <Button type="button" variant="ghost" size="icon" className="text-primary hover:bg-primary/20 rounded-full shrink-0">
-              <PlusCircle className="w-5 h-5" />
-            </Button>
-            <Input
-              value={newMessage}
-              onChange={handleInputChange}
-              placeholder="Digite sua runa..."
-              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground border-none focus:ring-0 p-2 text-base"
-            />
-            <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-10 h-10 shadow-glow hover:opacity-90">
+          <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2", currentConfig.inputForm)}>
+            <div className="flex-1">
+              <VirtualKeyboard
+                value={newMessage}
+                onType={handleTyping}
+                placeholder="Digite sua runa..."
+              />
+            </div>
+            <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-11 h-11 shadow-glow hover:opacity-90">
               <Send className="w-5 h-5" />
             </Button>
           </form>

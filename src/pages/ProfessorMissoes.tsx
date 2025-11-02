@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 interface Mission {
   id: string;
@@ -174,35 +173,31 @@ const ProfessorMissoes = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-lg font-heading">Título da Missão</Label>
-                <Input
+                <VirtualKeyboard
                   id="title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onType={setTitle}
                   placeholder="Ex: Pratique seu elemento por 30 minutos"
-                  className="text-base"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-lg font-heading">Descrição</Label>
-                <Textarea
+                <VirtualKeyboard
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onType={setDescription}
                   placeholder="Descreva os detalhes da missão..."
-                  className="min-h-[150px] text-base"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="xp" className="text-lg font-heading">XP de Recompensa</Label>
-                <Input
+                <VirtualKeyboard
                   id="xp"
-                  type="number"
-                  value={xpReward}
-                  onChange={(e) => setXpReward(Number(e.target.value))}
-                  min={1}
-                  className="text-base"
+                  value={xpReward.toString()}
+                  onType={(val) => setXpReward(Number(val) || 0)}
+                  placeholder="20"
                 />
               </div>
 
