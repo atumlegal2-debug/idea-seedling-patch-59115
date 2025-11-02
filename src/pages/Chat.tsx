@@ -81,6 +81,7 @@ const Chat = () => {
 
   const fetchMessages = useCallback(async () => {
     if (!locationId) return;
+    setLoading(true);
     const { data, error } = await supabase
       .from('messages')
       .select('*, users(name, photo_url, element)')
@@ -103,21 +104,46 @@ const Chat = () => {
   useEffect(() => {
     if (!locationId) return;
 
+    const handleNewMessage = async (payload: any) => {
+      const newMessagePartial = payload.new as Omit<Message, 'users'>;
+
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('name, photo_url, element')
+        .eq('id', newMessagePartial.user_id)
+        .single();
+      
+      if (error || !userData) {
+        console.error("Não foi possível buscar os dados do usuário para a nova mensagem", error);
+        return;
+      }
+
+      const newMessage: Message = {
+        ...newMessagePartial,
+        users: userData,
+      };
+
+      setMessages(currentMessages => {
+        if (currentMessages.some(m => m.id === newMessage.id)) {
+          return currentMessages;
+        }
+        return [newMessage, ...currentMessages];
+      });
+    };
+
     const channel = supabase
-      .channel(`public:messages:location_name=eq.${locationId}`)
+      .channel(`chat-realtime:${locationId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `location_name=eq.${locationId}` },
-        () => {
-          fetchMessages();
-        }
+        handleNewMessage
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [locationId, fetchMessages]);
+  }, [locationId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
