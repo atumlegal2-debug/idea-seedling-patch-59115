@@ -88,7 +88,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUser = (updates: Partial<AppUser>) => {
     if (user) {
-      setUser(prevUser => ({ ...prevUser!, ...updates }));
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+
+      // Also update localStorage to keep it in sync
+      const savedProfiles: SavedProfile[] = JSON.parse(localStorage.getItem("savedProfiles") || "[]");
+      const profileIndex = savedProfiles.findIndex(p => p.username === updatedUser.username);
+      
+      if (profileIndex > -1) {
+        const profileToUpdate = savedProfiles[profileIndex];
+        if (updates.profilePicture !== undefined) {
+          profileToUpdate.profilePicture = updates.profilePicture;
+        }
+        if (updates.element !== undefined) {
+          profileToUpdate.element = updates.element;
+        }
+        savedProfiles[profileIndex] = profileToUpdate;
+        localStorage.setItem("savedProfiles", JSON.stringify(savedProfiles));
+      }
     }
   };
 
