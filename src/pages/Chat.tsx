@@ -37,39 +37,45 @@ const Chat = () => {
 
   const locationConfig = {
     'floresta': {
-        overlay: 'bg-gradient-to-b from-emerald-950/70 via-green-950/80 to-black/90',
-        header: 'bg-emerald-950/50',
-        input: 'bg-emerald-950/30',
+        overlay: 'bg-gradient-to-b from-emerald-950/80 via-green-950/90 to-black/95',
+        header: 'bg-emerald-950/60 border-b-emerald-400/30',
+        inputContainer: 'bg-emerald-950/40 border-t-emerald-400/30',
+        inputForm: 'bg-emerald-950/50 border-emerald-400/40'
     },
     'sala-wooyoung': {
-        overlay: 'bg-gradient-to-b from-sky-950/70 via-blue-950/80 to-black/90',
-        header: 'bg-sky-950/50',
-        input: 'bg-sky-950/30',
+        overlay: 'bg-gradient-to-b from-sky-950/80 via-blue-950/90 to-black/95',
+        header: 'bg-sky-950/60 border-b-sky-400/30',
+        inputContainer: 'bg-sky-950/40 border-t-sky-400/30',
+        inputForm: 'bg-sky-950/50 border-sky-400/40'
     },
     'sala-romeo': {
-        overlay: 'bg-gradient-to-b from-rose-950/70 via-red-950/80 to-black/90',
-        header: 'bg-rose-950/50',
-        input: 'bg-rose-950/30',
+        overlay: 'bg-gradient-to-b from-rose-950/80 via-red-950/90 to-black/95',
+        header: 'bg-rose-950/60 border-b-rose-400/30',
+        inputContainer: 'bg-rose-950/40 border-t-rose-400/30',
+        inputForm: 'bg-rose-950/50 border-rose-400/40'
     },
     'sala-niki': {
-        overlay: 'bg-gradient-to-b from-amber-950/70 via-yellow-950/80 to-black/90',
-        header: 'bg-amber-950/50',
-        input: 'bg-amber-950/30',
+        overlay: 'bg-gradient-to-b from-amber-950/80 via-yellow-950/90 to-black/95',
+        header: 'bg-amber-950/60 border-b-amber-400/30',
+        inputContainer: 'bg-amber-950/40 border-t-amber-400/30',
+        inputForm: 'bg-amber-950/50 border-amber-400/40'
     },
     'default': {
-        overlay: 'bg-gradient-to-b from-background/95 via-background/90 to-background/95',
-        header: 'bg-background/80',
-        input: 'bg-background/80',
+        overlay: 'bg-gradient-to-b from-background/90 via-background/80 to-background/90',
+        header: 'bg-background/80 border-b-border',
+        inputContainer: 'bg-background/80 border-t-border',
+        inputForm: 'bg-muted/50 border-border'
     }
   };
 
   const getLocationConfig = () => {
-      if (!locationId) return locationConfig.default;
-      if (locationId.includes('floresta')) return locationConfig.floresta;
-      if (locationId.includes('sala-wooyoung')) return locationConfig['sala-wooyoung'];
-      if (locationId.includes('sala-romeo')) return locationConfig['sala-romeo'];
-      if (locationId.includes('sala-niki')) return locationConfig['sala-niki'];
-      return locationConfig.default;
+    switch (locationId) {
+        case 'floresta': return locationConfig.floresta;
+        case 'sala-wooyoung': return locationConfig['sala-wooyoung'];
+        case 'sala-romeo': return locationConfig['sala-romeo'];
+        case 'sala-niki': return locationConfig['sala-niki'];
+        default: return locationConfig.default;
+    }
   };
 
   const currentConfig = getLocationConfig();
@@ -166,7 +172,7 @@ const Chat = () => {
       {/* Main Content */}
       <div className="relative z-10 flex flex-col h-full max-w-2xl mx-auto w-full">
         {/* Header */}
-        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-2 justify-between shrink-0 border-b border-white/10", currentConfig.header)}>
+        <header className={cn("flex items-center backdrop-blur-sm p-4 pb-2 justify-between shrink-0 border-b", currentConfig.header)}>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10">
               <ArrowLeft className="w-5 h-5" />
@@ -235,8 +241,8 @@ const Chat = () => {
         </div>
 
         {/* Input Bar */}
-        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t border-white/10 shrink-0", currentConfig.input)}>
-          <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-muted/50 border border-border rounded-full px-2 py-1.5">
+        <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
+          <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2 border rounded-full px-2 py-1.5", currentConfig.inputForm)}>
             <Button type="button" variant="ghost" size="icon" className="text-primary hover:bg-primary/20 rounded-full shrink-0">
               <PlusCircle className="w-5 h-5" />
             </Button>
