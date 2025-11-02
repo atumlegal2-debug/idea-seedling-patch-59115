@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import { cn } from '@/lib/utils';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Message {
   id: number;
@@ -24,6 +25,11 @@ interface Message {
   };
 }
 
+interface TypingUser {
+  name: string;
+  id: string;
+}
+
 const Chat = () => {
   const { locationId } = useParams();
   const navigate = useNavigate();
@@ -31,6 +37,11 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const typingTimeoutRef = useRef<Map<string, number>>(new Map());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const locationName = locationId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
@@ -79,6 +90,10 @@ const Chat = () => {
 
   const currentConfig = getLocationConfig();
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const fetchMessages = useCallback(async () => {
     if (!locationId) return;
     setLoading(true);
@@ -86,7 +101,7 @@ const Chat = () => {
       .from('messages')
       .select('*, users(name, photo_url, element)')
       .eq('location_name', locationId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
 
     if (error) {
       toast.error('Erro ao carregar mensagens.');
@@ -102,10 +117,22 @@ const Chat = () => {
   }, [fetchMessages]);
 
   useEffect(() => {
-    if (!locationId) return;
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (!locationId || !user) return;
+
+    const channel = supabase.channel(`chat-realtime:${locationId}`, {
+      config: {
+        broadcast: { self: false },
+      },
+    });
+    channelRef.current = channel;
 
     const handleNewMessage = async (payload: any) => {
       const newMessagePartial = payload.new as Omit<Message, 'users'>;
+      if (newMessagePartial.user_id === user.id) return;
 
       const { data: userData, error } = await supabase
         .from('users')
@@ -113,55 +140,71 @@ const Chat = () => {
         .eq('id', newMessagePartial.user_id)
         .single();
       
-      if (error || !userData) {
-        console.error("Não foi possível buscar os dados do usuário para a nova mensagem", error);
-        return;
-      }
+      if (error || !userData) return;
 
-      const newMessage: Message = {
-        ...newMessagePartial,
-        users: userData,
-      };
-
-      setMessages(currentMessages => {
-        if (currentMessages.some(m => m.id === newMessage.id)) {
-          return currentMessages;
-        }
-        return [newMessage, ...currentMessages];
-      });
+      const newMessage: Message = { ...newMessagePartial, users: userData };
+      setMessages(current => [...current, newMessage]);
     };
 
-    const channel = supabase
-      .channel(`chat-realtime:${locationId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `location_name=eq.${locationId}` },
-        handleNewMessage
-      )
+    const handleTypingEvent = ({ payload }: { payload: TypingUser }) => {
+      const existingTimeout = typingTimeoutRef.current.get(payload.id);
+      if (existingTimeout) clearTimeout(existingTimeout);
+
+      setTypingUsers(current => current.some(u => u.id === payload.id) ? current : [...current, payload]);
+
+      const newTimeout = window.setTimeout(() => {
+        setTypingUsers(current => current.filter(u => u.id !== payload.id));
+        typingTimeoutRef.current.delete(payload.id);
+      }, 3000);
+
+      typingTimeoutRef.current.set(payload.id, newTimeout);
+    };
+
+    channel
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `location_name=eq.${locationId}` }, handleNewMessage)
+      .on('broadcast', { event: 'typing' }, handleTypingEvent)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      channelRef.current = null;
+      typingTimeoutRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     };
-  }, [locationId]);
+  }, [locationId, user]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !user || !locationId) return;
 
     const content = newMessage.trim();
+    const optimisticMessage: Message = {
+      id: Date.now(),
+      content,
+      created_at: new Date().toISOString(),
+      user_id: user.id,
+      users: { name: user.name, photo_url: user.profilePicture, element: user.element },
+    };
+
+    setMessages(current => [...current, optimisticMessage]);
     setNewMessage('');
 
-    const { error } = await supabase.from('messages').insert({
-      content,
-      user_id: user.id,
-      location_name: locationId,
-    });
+    const { error } = await supabase.from('messages').insert({ content, user_id: user.id, location_name: locationId });
 
     if (error) {
       toast.error('Erro ao enviar mensagem.');
-      console.error(error);
+      setMessages(current => current.filter(m => m.id !== optimisticMessage.id));
       setNewMessage(content);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    if (channelRef.current && user) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { name: user.name, id: user.id },
+      });
     }
   };
 
@@ -180,42 +223,33 @@ const Chat = () => {
 
   return (
     <div className="relative h-screen w-full flex flex-col bg-background">
-      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-20" />
         <div className={cn("absolute inset-0", currentConfig.overlay)} />
       </div>
 
-      {/* Main Content */}
       <div className="relative z-10 flex flex-col h-full max-w-2xl mx-auto w-full">
-        {/* Header */}
         <header className={cn("flex items-center backdrop-blur-sm p-4 pb-2 justify-between shrink-0 border-b", currentConfig.header)}>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate('/locais')} className="h-10 w-10">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center size-10 bg-muted rounded-full">
-                {getLocationIcon()}
-              </div>
+              <div className="flex items-center justify-center size-10 bg-muted rounded-full">{getLocationIcon()}</div>
               <h2 className="text-foreground text-lg font-bold font-heading leading-tight tracking-wide">{locationName}</h2>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-10 w-10">
-            <MoreVertical className="w-5 h-5" />
-          </Button>
+          <Button variant="ghost" size="icon" className="h-10 w-10"><MoreVertical className="w-5 h-5" /></Button>
         </header>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-4">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
           {loading ? (
-            <p className="text-center text-muted-foreground">Carregando chat...</p>
+            <p className="text-center text-muted-foreground m-auto">Carregando chat...</p>
           ) : messages.length === 0 ? (
-            <p className="text-center text-muted-foreground font-heading">Seja o primeiro a enviar uma mensagem!</p>
+            <p className="text-center text-muted-foreground font-heading m-auto">Seja o primeiro a enviar uma mensagem!</p>
           ) : (
             messages.map((msg) => (
-              <div key={msg.id} className={`flex items-end gap-3 ${msg.user_id === user?.id ? 'justify-end' : ''}`}>
-                {/* Other User's Message */}
+              <div key={msg.id} className={`flex items-end gap-3 ${msg.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
                 {msg.user_id !== user?.id && (
                   <>
                     <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-primary/50">
@@ -227,13 +261,10 @@ const Chat = () => {
                       <div className="text-base font-normal leading-normal flex rounded-xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
                         <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       </div>
-                       <p className="text-xs text-muted-foreground mt-1 ml-3">
-                        {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 ml-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
                     </div>
                   </>
                 )}
-                {/* Current User's Message */}
                 {msg.user_id === user?.id && (
                   <>
                     <div className="flex flex-col gap-1 items-end max-w-md">
@@ -241,9 +272,7 @@ const Chat = () => {
                       <div className="text-base font-normal leading-normal flex rounded-xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
                         <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       </div>
-                       <p className="text-xs text-muted-foreground mt-1 mr-3">
-                        {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 mr-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
                     </div>
                     <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-secondary">
                       <AvatarImage src={user?.profilePicture || undefined} />
@@ -254,9 +283,14 @@ const Chat = () => {
               </div>
             ))
           )}
+          <div className="h-6 text-sm text-muted-foreground italic">
+            {typingUsers.length > 0 && (
+              `${typingUsers.map(u => u.name).join(', ')} ${typingUsers.length > 1 ? 'estão' : 'está'} digitando...`
+            )}
+          </div>
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Bar */}
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
           <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2 border rounded-full px-2 py-1.5", currentConfig.inputForm)}>
             <Button type="button" variant="ghost" size="icon" className="text-primary hover:bg-primary/20 rounded-full shrink-0">
@@ -264,7 +298,7 @@ const Chat = () => {
             </Button>
             <Input
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Digite sua runa..."
               className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground border-none focus:ring-0 p-2 text-base"
             />
