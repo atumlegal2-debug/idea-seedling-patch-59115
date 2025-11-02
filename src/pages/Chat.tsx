@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, Send, Trees, BookOpen, Home, MoreVertical, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, isSameDay, isToday, isYesterday, formatRelative } from 'date-fns';
+import { format, isSameDay, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import heroImage from "@/assets/academy-hero-enhanced.jpg";
 import { cn } from '@/lib/utils';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { locationThemes, getLocationConfig } from './locationThemes';
 
 interface Message {
   id: number;
@@ -30,8 +30,6 @@ interface TypingUser {
   id: string;
 }
 
-const forestBg = "https://lh3.googleusercontent.com/aida-public/AB6AXuA6EcV_cdbKpefluoFtaUxWdGDcF3qctRhvtkRFVntt0_Z3x3OBePH1dQXufIbflj6Xi2FkGhggxRj-UlHzJBAnFKJnivPQWhfhxBVNX_2ubXbiv-8ZumpwdP8MnIsTJj5G-8S2oixtLkwUrHn4AisInAFdo0evjFwUw4gNNvXazPsOi9uGTJF1r2Ft_dJ12_U7q8b-yo1s246OAatYNLh7rvb-0vOYIKihWdZoChogfvfk0qSecwZeFAqAzgzEAoyLdMt0U2oJZgA";
-
 const Chat = () => {
   const { locationId } = useParams();
   const navigate = useNavigate();
@@ -47,28 +45,7 @@ const Chat = () => {
 
   const locationName = locationId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-  const locationThemes = {
-    floresta: {
-      bgImage: forestBg,
-      overlay: 'bg-black/50',
-      header: 'bg-[#102213]/80 border-b-[#92c99b]/20',
-      nameColor: 'text-[#92c99b]',
-      otherBubble: 'bg-[#234829] text-white',
-      inputContainer: 'bg-[#102213]/80 border-t-[#92c99b]/20',
-      inputForm: 'bg-[#0A1A0C] border-[#92c99b]/20',
-    },
-    default: {
-      bgImage: heroImage,
-      overlay: 'bg-background/90',
-      header: 'bg-background/80 border-b-border',
-      nameColor: 'text-secondary',
-      otherBubble: 'bg-muted text-foreground',
-      inputContainer: 'bg-background/80 border-t-border',
-      inputForm: 'bg-muted/50 border-border',
-    }
-  };
-
-  const theme = locationId === 'floresta' ? locationThemes.floresta : locationThemes.default;
+  const theme = getLocationConfig(locationId);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -209,8 +186,8 @@ const Chat = () => {
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", theme.inputContainer)}>
           <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2 border rounded-full px-2 py-1.5", theme.inputForm)}>
             <Button type="button" variant="ghost" size="icon" className="text-[#13ec37] hover:bg-primary/20 rounded-full shrink-0"><PlusCircle className="w-5 h-5" /></Button>
-            <Input value={newMessage} onChange={handleInputChange} placeholder="Digite sua runa..." className="flex-1 bg-transparent text-white border-none focus:ring-0 p-2 text-base placeholder:text-white/60" />
-            <Button type="submit" size="icon" className="bg-[#13ec37] text-[#102213] rounded-full shrink-0 w-10 h-10 hover:bg-primary/90"><Send className="w-5 h-5" /></Button>
+            <Input value={newMessage} onChange={handleInputChange} placeholder="Digite sua runa..." className={cn("flex-1 bg-transparent text-white border-none focus:ring-0 p-2 text-base", theme.inputPlaceholder)} />
+            <Button type="submit" size="icon" className={cn("text-white rounded-full shrink-0 w-10 h-10", theme.myBubble)}><Send className="w-5 h-5" /></Button>
           </form>
         </div>
       </div>
@@ -244,12 +221,12 @@ const ChatMessage = ({ message, isOwnMessage, isFirstInGroup, theme }: { message
       )}
       <div className={cn('flex flex-col gap-1', isOwnMessage ? 'items-end' : 'items-start')}>
         {isFirstInGroup && (
-          <p className={cn("text-[13px] font-bold font-heading", isOwnMessage ? 'text-[#13ec37]' : theme.nameColor)}>
+          <p className={cn("text-[13px] font-bold font-heading", isOwnMessage ? theme.myNameColor : theme.nameColor)}>
             {message.users.name}
           </p>
         )}
         <div className={cn("flex items-end gap-2 text-base leading-normal rounded-lg px-4 py-3 max-w-xs md:max-w-sm break-words", 
-          isOwnMessage ? 'rounded-br-none bg-[#13ec37] text-[#102213]' : `rounded-bl-none ${theme.otherBubble}`
+          isOwnMessage ? `rounded-br-none ${theme.myBubble}` : `rounded-bl-none ${theme.otherBubble}`
         )}>
           <p className="whitespace-pre-wrap">{message.content}</p>
           <span className="text-[10px] opacity-70 mt-1 shrink-0">{format(new Date(message.created_at), 'HH:mm')}</span>
