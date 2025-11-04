@@ -37,7 +37,8 @@ const Missoes = () => {
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
+
+    const progressChannel = supabase
       .channel(`public:mission_progress:student_id=eq.${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mission_progress', filter: `student_id=eq.${user.id}` },
         (payload) => {
@@ -48,7 +49,23 @@ const Missoes = () => {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    const missionsChannel = supabase
+      .channel('public:missions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            toast.info("Uma nova missão está disponível!");
+          }
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(progressChannel);
+      supabase.removeChannel(missionsChannel);
+    };
   }, [user, fetchData]);
 
   const handleAcceptMission = async (mission: any) => {
