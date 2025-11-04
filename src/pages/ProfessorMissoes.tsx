@@ -40,11 +40,21 @@ const ProfessorMissoes = () => {
 
   useEffect(() => {
     fetchData();
-    const channel = supabase
+
+    const progressChannel = supabase
       .channel('public:mission_progress')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mission_progress' }, () => fetchData())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    const missionsChannel = supabase
+      .channel('public:missions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(progressChannel);
+      supabase.removeChannel(missionsChannel);
+    };
   }, [fetchData]);
 
   const createMission = async () => {
@@ -66,7 +76,7 @@ const ProfessorMissoes = () => {
       setDescription("");
       setXpReward(20);
       setIsCreating(false);
-      fetchData();
+      // No need to call fetchData(), the real-time listener will handle it
     }
   };
 
@@ -76,7 +86,7 @@ const ProfessorMissoes = () => {
       toast.error("Erro ao excluir missão.");
     } else {
       toast.success("Missão excluída!");
-      fetchData();
+      // No need to call fetchData(), the real-time listener will handle it
     }
   };
 
@@ -97,7 +107,7 @@ const ProfessorMissoes = () => {
       toast.error("Erro ao conceder XP.");
     } else {
       toast.success(`Missão de ${progress.users.name} aprovada!`);
-      fetchData();
+      // No need to call fetchData(), the real-time listener will handle it
     }
   };
 
@@ -110,7 +120,7 @@ const ProfessorMissoes = () => {
       toast.error("Erro ao reprovar missão.");
     } else {
       toast.info("Missão reprovada.");
-      fetchData();
+      // No need to call fetchData(), the real-time listener will handle it
     }
   };
 
