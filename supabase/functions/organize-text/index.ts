@@ -27,11 +27,11 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'Você é um assistente educacional que organiza textos para atividades escolares. Organize o texto de forma clara, com boa formatação, parágrafos bem estruturados e correção gramatical. Mantenha o conteúdo original mas melhore a estrutura e clareza.'
+            content: 'Você é um assistente educacional que organiza textos para atividades escolares. Organize o texto de forma clara, com boa formatação, parágrafos bem estruturados e correção gramatical. IMPORTANTE: Retorne APENAS texto puro, sem usar formatação markdown (sem **, sem #, sem _, sem listas numeradas ou com marcadores). Use apenas quebras de linha e parágrafos para estruturar o texto.'
           },
           {
             role: 'user',
-            content: `Por favor, organize e melhore este texto para uma atividade escolar:\n\n${text}`
+            content: `Por favor, organize e melhore este texto para uma atividade escolar. Retorne apenas o texto organizado sem nenhuma formatação markdown:\n\n${text}`
           }
         ],
       }),
