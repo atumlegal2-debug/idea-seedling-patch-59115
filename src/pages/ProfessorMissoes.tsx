@@ -132,15 +132,15 @@ const ProfessorMissoes = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-lg font-heading">Título da Missão</Label>
-                <VirtualKeyboard id="title" value={title} onType={setTitle} placeholder="Ex: Pratique seu elemento por 30 minutos" />
+                <VirtualKeyboard value={title} onType={setTitle} placeholder="Ex: Pratique seu elemento por 30 minutos" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-lg font-heading">Descrição</Label>
-                <VirtualKeyboard id="description" value={description} onType={setDescription} placeholder="Descreva os detalhes da missão..." />
+                <VirtualKeyboard value={description} onType={setDescription} placeholder="Descreva os detalhes da missão..." />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="xp" className="text-lg font-heading">XP de Recompensa</Label>
-                <VirtualKeyboard id="xp" value={xpReward.toString()} onType={(val) => setXpReward(Number(val) || 0)} placeholder="20" />
+                <VirtualKeyboard value={xpReward.toString()} onType={(val) => setXpReward(Number(val) || 0)} placeholder="20" />
               </div>
               <Button onClick={createMission} className="w-full bg-gradient-arcane hover:opacity-90 transition-opacity shadow-glow text-lg py-6">Criar Missão</Button>
             </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Plus, Trash2, X, Eye } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, X, Eye, Clipboard, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +40,8 @@ const ProfessorAtividades = () => {
   const { user, loading } = useUser();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
+  const [isOrganizing, setIsOrganizing] = useState(false);
   
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
@@ -162,27 +164,126 @@ const ProfessorAtividades = () => {
     }
   };
 
+  const pasteText = async () => {
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      setText(clipboardText);
+      toast.success("Texto colado!");
+    } catch (err) {
+      toast.error("Erro ao colar texto. Verifique as permissões.");
+    }
+  };
+
+  const organizeWithAI = async () => {
+    if (!text.trim()) {
+      toast.error("Digite um texto primeiro!");
+      return;
+    }
+    setIsOrganizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('organize-text', {
+        body: { text }
+      });
+      if (error) throw error;
+      if (data?.organizedText) {
+        setText(data.organizedText);
+        toast.success("Texto organizado com sucesso!");
+      }
+    } catch (err) {
+      toast.error("Erro ao organizar texto com IA.");
+      console.error(err);
+    } finally {
+      setIsOrganizing(false);
+    }
+  };
+
   if (isCreating) {
     return (
       <div className="min-h-screen p-6 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          <Button variant="outline" onClick={() => setIsCreating(false)} className="gap-2">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Button>
+          <div className="flex items-center justify-between gap-4">
+            <Button variant="outline" onClick={() => setIsCreating(false)} className="gap-2">
+              <ArrowLeft className="w-4 h-4" /> Voltar
+            </Button>
+            <Button variant="outline" onClick={() => setIsPreview(!isPreview)} className="gap-2">
+              <Eye className="w-4 h-4" /> {isPreview ? "Editar" : "Preview"}
+            </Button>
+          </div>
           <Card className="p-8 shadow-card border-2 border-primary/30 bg-card/80 backdrop-blur">
-            <h2 className="font-heading text-3xl font-bold mb-6 text-gradient-arcane">Nova Atividade</h2>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-lg font-heading">Título</Label>
-                <VirtualKeyboard id="title" value={title} onType={setTitle} placeholder="Ex: Elementos da Natureza" />
+            <h2 className="font-heading text-3xl font-bold mb-6 text-gradient-arcane">
+              {isPreview ? "Preview da Atividade" : "Nova Atividade"}
+            </h2>
+            {isPreview ? (
+              <div className="space-y-6">
+                <div className="p-6 bg-muted/30 rounded-lg border border-border/50">
+                  <h3 className="font-heading text-2xl font-bold mb-4">{title || "Título da Atividade"}</h3>
+                  <p className="text-foreground whitespace-pre-wrap mb-6">{text || "Texto da atividade aparecerá aqui..."}</p>
+                  <div className="space-y-4">
+                    <h4 className="font-heading text-xl font-semibold">Perguntas:</h4>
+                    {questions.length === 0 ? (
+                      <p className="text-muted-foreground">Nenhuma pergunta adicionada ainda.</p>
+                    ) : (
+                      questions.map((q, i) => (
+                        <Card key={q.id} className="p-4 bg-background/50">
+                          <p className="font-semibold mb-3">{i + 1}. {q.text}</p>
+                          {q.type === "multiple" && q.options && (
+                            <div className="space-y-2 pl-4">
+                              {q.options.map((opt, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <div className="w-4 h-4 rounded-full border-2 border-primary/50" />
+                                  <span className={opt === q.correctAnswer ? "text-green-400 font-semibold" : ""}>{opt}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {q.type === "true-false" && q.statements && (
+                            <div className="space-y-2 pl-4">
+                              {q.statements.map((stmt, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Switch disabled checked={stmt.isTrue} />
+                                  <span className="text-sm">{stmt.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border/50">
+                    <span className="px-3 py-1 rounded-full bg-gradient-arcane text-white text-sm">{xpReward} XP</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="text" className="text-lg font-heading">Texto da Atividade</Label>
-                <VirtualKeyboard id="text" value={text} onType={setText} placeholder="Escreva o conteúdo da aula aqui..." />
-              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-lg font-heading">Título</Label>
+                  <VirtualKeyboard value={title} onType={setTitle} placeholder="Ex: Elementos da Natureza" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="text" className="text-lg font-heading">Texto da Atividade</Label>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={pasteText} className="gap-2">
+                        <Clipboard className="w-4 h-4" /> Colar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={organizeWithAI} 
+                        disabled={isOrganizing}
+                        className="gap-2"
+                      >
+                        <Sparkles className="w-4 h-4" /> {isOrganizing ? "Organizando..." : "Organizar com IA"}
+                      </Button>
+                    </div>
+                  </div>
+                  <VirtualKeyboard value={text} onType={setText} placeholder="Escreva o conteúdo da aula aqui..." />
+                </div>
               <div className="space-y-2">
                 <Label htmlFor="xp" className="text-lg font-heading">XP ao Completar</Label>
-                <VirtualKeyboard id="xp" value={xpReward.toString()} onType={(val) => setXpReward(Number(val) || 0)} placeholder="10" />
+                <VirtualKeyboard value={xpReward.toString()} onType={(val) => setXpReward(Number(val) || 0)} placeholder="10" />
               </div>
               <div className="border-t pt-6">
                 <h3 className="font-heading text-xl font-bold mb-4">Adicionar Pergunta</h3>
@@ -244,7 +345,8 @@ const ProfessorAtividades = () => {
                 </div>
               )}
               <Button onClick={createActivity} className="w-full bg-gradient-arcane hover:opacity-90 shadow-glow text-lg py-6">Criar Atividade</Button>
-            </div>
+              </div>
+            )}
           </Card>
         </div>
       </div>
