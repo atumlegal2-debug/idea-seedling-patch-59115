@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Plus, Trash2, X, Eye, Clipboard, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
@@ -284,6 +285,12 @@ const ProfessorAtividades = () => {
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-lg font-heading">Título</Label>
                   <VirtualKeyboard value={title} onType={setTitle} placeholder="Ex: Elementos da Natureza" />
+                  <Textarea
+                    placeholder="Ou cole o título aqui..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="min-h-[60px]"
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -302,17 +309,23 @@ const ProfessorAtividades = () => {
                   </div>
                   <div className="space-y-2">
                     <VirtualKeyboard value={text} onType={setText} placeholder="Escreva o conteúdo da aula aqui..." />
-                    <textarea
-                      className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                    <Textarea
                       placeholder="Ou cole seu texto aqui..."
                       value={text}
                       onChange={(e) => setText(e.target.value)}
+                      className="min-h-[100px]"
                     />
                   </div>
                 </div>
               <div className="space-y-2">
                 <Label htmlFor="xp" className="text-lg font-heading">XP ao Completar</Label>
                 <VirtualKeyboard value={xpReward.toString()} onType={(val) => setXpReward(Number(val) || 0)} placeholder="10" />
+                <Textarea
+                  placeholder="Ou cole o valor de XP aqui..."
+                  value={xpReward.toString()}
+                  onChange={(e) => setXpReward(Number(e.target.value) || 0)}
+                  className="min-h-[60px]"
+                />
               </div>
               <div className="border-t pt-6">
                 <h3 className="font-heading text-xl font-bold mb-4">Adicionar Pergunta</h3>
@@ -324,15 +337,30 @@ const ProfessorAtividades = () => {
                       <div className="flex items-center space-x-2"><RadioGroupItem value="multiple" id="multiple" /><Label htmlFor="multiple">Múltipla Escolha</Label></div>
                     </RadioGroup>
                   </div>
-                  <div className="space-y-2"><Label>Pergunta</Label><VirtualKeyboard value={currentQuestion} onType={setCurrentQuestion} placeholder="Digite a pergunta" /></div>
+                  <div className="space-y-2">
+                    <Label>Pergunta</Label>
+                    <VirtualKeyboard value={currentQuestion} onType={setCurrentQuestion} placeholder="Digite a pergunta" />
+                    <Textarea
+                      placeholder="Ou cole a pergunta aqui..."
+                      value={currentQuestion}
+                      onChange={(e) => setCurrentQuestion(e.target.value)}
+                      className="min-h-[60px]"
+                    />
+                  </div>
                   {currentQuestionType === "true-false" ? (
                     <div className="space-y-3 p-4 rounded-lg bg-muted/20 border border-border/50">
                       <Label className="text-base font-heading">Afirmações</Label>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <VirtualKeyboard value={newStatementText} onType={setNewStatementText} placeholder="Digite uma afirmação" />
+                      <div className="space-y-2">
+                        <VirtualKeyboard value={newStatementText} onType={setNewStatementText} placeholder="Digite uma afirmação" />
+                        <div className="flex gap-2">
+                          <Textarea
+                            placeholder="Ou cole a afirmação aqui..."
+                            value={newStatementText}
+                            onChange={(e) => setNewStatementText(e.target.value)}
+                            className="flex-1 min-h-[60px]"
+                          />
+                          <Button onClick={addStatement} variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
                         </div>
-                        <Button onClick={addStatement} variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
                       </div>
                       {currentStatements.map((s) => (
                         <Card key={s.id} className="p-3 bg-background/50 flex items-center gap-3">
@@ -347,7 +375,17 @@ const ProfessorAtividades = () => {
                     <>
                       <div className="space-y-2">
                         <Label>Opções de Resposta</Label>
-                        {currentOptions.map((o, i) => <VirtualKeyboard key={i} value={o} onType={(val) => setCurrentOptions(currentOptions.map((opt, idx) => idx === i ? val : opt))} placeholder={`Opção ${i + 1}`} />)}
+                        {currentOptions.map((o, i) => (
+                          <div key={i} className="space-y-2">
+                            <VirtualKeyboard value={o} onType={(val) => setCurrentOptions(currentOptions.map((opt, idx) => idx === i ? val : opt))} placeholder={`Opção ${i + 1}`} />
+                            <Textarea
+                              placeholder={`Ou cole a opção ${i + 1} aqui...`}
+                              value={o}
+                              onChange={(e) => setCurrentOptions(currentOptions.map((opt, idx) => idx === i ? e.target.value : opt))}
+                              className="min-h-[60px]"
+                            />
+                          </div>
+                        ))}
                       </div>
                       <div className="space-y-2">
                         <Label>Resposta Correta</Label>
