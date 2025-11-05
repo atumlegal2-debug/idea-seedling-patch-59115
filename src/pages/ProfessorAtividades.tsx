@@ -164,14 +164,38 @@ const ProfessorAtividades = () => {
     }
   };
 
-  const pasteText = async () => {
-    try {
-      const clipboardText = await navigator.clipboard.readText();
-      setText(clipboardText);
-      toast.success("Texto colado!");
-    } catch (err) {
-      toast.error("Erro ao colar texto. Verifique as permissões.");
-    }
+  const pasteText = () => {
+    const textarea = document.createElement('textarea');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    
+    setTimeout(() => {
+      const handlePaste = (e: ClipboardEvent) => {
+        e.preventDefault();
+        const pastedText = e.clipboardData?.getData('text');
+        if (pastedText) {
+          setText(pastedText);
+          toast.success("Texto colado!");
+        }
+        document.body.removeChild(textarea);
+      };
+      
+      textarea.addEventListener('paste', handlePaste);
+      
+      // Fallback para desktop usando execCommand
+      document.execCommand('paste');
+      
+      // Remover listener e elemento após 100ms se nada foi colado
+      setTimeout(() => {
+        textarea.removeEventListener('paste', handlePaste);
+        if (document.body.contains(textarea)) {
+          document.body.removeChild(textarea);
+          toast.info("Toque no campo e cole o texto manualmente se necessário");
+        }
+      }, 100);
+    }, 100);
   };
 
   const organizeWithAI = async () => {
@@ -265,9 +289,6 @@ const ProfessorAtividades = () => {
                   <div className="flex items-center justify-between">
                     <Label htmlFor="text" className="text-lg font-heading">Texto da Atividade</Label>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={pasteText} className="gap-2">
-                        <Clipboard className="w-4 h-4" /> Colar
-                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -279,7 +300,15 @@ const ProfessorAtividades = () => {
                       </Button>
                     </div>
                   </div>
-                  <VirtualKeyboard value={text} onType={setText} placeholder="Escreva o conteúdo da aula aqui..." />
+                  <div className="space-y-2">
+                    <VirtualKeyboard value={text} onType={setText} placeholder="Escreva o conteúdo da aula aqui..." />
+                    <textarea
+                      className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                      placeholder="Ou cole seu texto aqui..."
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                    />
+                  </div>
                 </div>
               <div className="space-y-2">
                 <Label htmlFor="xp" className="text-lg font-heading">XP ao Completar</Label>
