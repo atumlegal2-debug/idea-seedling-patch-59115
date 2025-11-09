@@ -51,6 +51,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (data && !error) {
             const appUser: AppUser = { 
               ...data, 
+              element: data.element as AppUser['element'],
               isProfessor: data.is_professor, 
               updated_at: data.updated_at,
               profilePicture: data.photo_url 

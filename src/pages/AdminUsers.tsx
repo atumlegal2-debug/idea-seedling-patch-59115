@@ -54,7 +54,7 @@ const AdminUsers = () => {
       toast.error('Erro ao carregar usuários.');
       console.error(error);
     } else {
-      setUsers(data || []);
+      setUsers((data || []).map(u => ({ ...u, element: u.element as ManagedUser['element'] })));
     }
     setLoading(false);
   };

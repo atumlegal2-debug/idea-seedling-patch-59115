@@ -8,7 +8,10 @@ import { ArrowLeft, Send, Trees, BookOpen, Home, MoreVertical } from 'lucide-rea
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import heroImage from "@/assets/academy-hero-enhanced.jpg";
+import waterClassroom from "@/assets/classroom-water.jpg";
+import fireClassroom from "@/assets/classroom-fire.jpg";
+import earthClassroom from "@/assets/classroom-earth.jpg";
+import forestClassroom from "@/assets/classroom-forest.jpg";
 import { cn } from '@/lib/utils';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import VirtualKeyboard from '@/components/VirtualKeyboard';
@@ -88,7 +91,18 @@ const Chat = () => {
     }
   };
 
+  const getLocationBackground = () => {
+    switch (locationId) {
+        case 'floresta': return forestClassroom;
+        case 'sala-wooyoung': return waterClassroom;
+        case 'sala-romeo': return fireClassroom;
+        case 'sala-niki': return earthClassroom;
+        default: return waterClassroom;
+    }
+  };
+
   const currentConfig = getLocationConfig();
+  const currentBackground = getLocationBackground();
 
   const fetchMessages = useCallback(async () => {
     if (!locationId) return;
@@ -220,7 +234,7 @@ const Chat = () => {
   return (
     <div className="relative h-dvh w-full flex flex-col bg-background">
       <div className="absolute inset-0 z-0">
-        <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-20" />
+        <img src={currentBackground} alt={locationName} className="h-full w-full object-cover opacity-30" />
         <div className={cn("absolute inset-0", currentConfig.overlay)} />
       </div>
 

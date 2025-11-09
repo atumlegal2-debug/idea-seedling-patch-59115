@@ -47,7 +47,7 @@ const Aulas = () => {
       .from('activities')
       .select('*');
     if (activitiesError) toast.error("Erro ao carregar atividades.");
-    else setActivities(activitiesData || []);
+    else setActivities((activitiesData || []).map(a => ({ ...a, questions: a.questions as unknown as Question[] })));
 
     const { data: submissionsData, error: submissionsError } = await supabase
       .from('activity_submissions')

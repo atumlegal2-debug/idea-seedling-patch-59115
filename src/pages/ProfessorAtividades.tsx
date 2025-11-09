@@ -71,7 +71,7 @@ const ProfessorAtividades = () => {
     if (error) {
       toast.error("Erro ao carregar atividades.");
     } else {
-      setActivities(data || []);
+      setActivities((data || []).map(a => ({ ...a, questions: a.questions as unknown as Question[] })));
     }
   }, []);
 
@@ -141,7 +141,7 @@ const ProfessorAtividades = () => {
       toast.error("Preencha todos os campos e adicione pelo menos uma pergunta");
       return;
     }
-    const { error } = await supabase.from('activities').insert({ title, text, questions, xp_reward: xpReward });
+    const { error } = await supabase.from('activities').insert({ title, text, questions: questions as any, xp_reward: xpReward });
     if (error) {
       toast.error("Erro ao criar atividade.");
     } else {

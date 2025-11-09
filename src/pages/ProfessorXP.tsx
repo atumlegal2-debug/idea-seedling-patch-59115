@@ -43,7 +43,7 @@ const ProfessorXP = () => {
     if (error) {
       toast.error("Erro ao carregar alunos.");
     } else {
-      setUsers(data || []);
+      setUsers((data || []).map(u => ({ ...u, element: u.element as Student['element'] })));
     }
   }, []);
 

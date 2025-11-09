@@ -84,7 +84,7 @@ const Index = () => {
       return;
     }
     
-    const appUser: AppUser = { ...data, isProfessor: data.is_professor, profilePicture: data.photo_url, updated_at: data.updated_at };
+    const appUser: AppUser = { ...data, element: data.element as AppUser['element'], isProfessor: data.is_professor, profilePicture: data.photo_url, updated_at: data.updated_at };
     login(appUser, saveProfile);
     navigate(appUser.isProfessor ? "/professor" : "/dashboard");
   };
@@ -124,7 +124,7 @@ const Index = () => {
       return;
     }
     
-    const appUser: AppUser = { ...newUser, isProfessor: false, profilePicture: newUser.photo_url, updated_at: newUser.updated_at };
+    const appUser: AppUser = { ...newUser, element: newUser.element as AppUser['element'], isProfessor: false, profilePicture: newUser.photo_url, updated_at: newUser.updated_at };
     login(appUser, true);
     toast.success("Conta criada com sucesso!");
     navigate("/dashboard");
