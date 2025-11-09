@@ -39,7 +39,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
   };
 
   return (
-    <div className="relative w-full">
+    <div className="w-full">
       <div className="flex gap-2 items-center">
         <div className="flex-1 px-3 py-2.5 rounded-lg border-2 border-input bg-background/80 backdrop-blur text-foreground min-h-11 flex items-center overflow-x-auto transition-all hover:border-primary/50">
           {value || <span className="text-muted-foreground">{placeholder}</span>}
@@ -56,15 +56,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
       </div>
 
       {isOpen && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Keyboard Container - Centered */}
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg animate-fade-in">
+        <div className="pt-4 animate-fade-in">
             <div className="bg-gradient-to-b from-card/95 via-card to-card/98 backdrop-blur-xl border-t-4 border-primary/40 shadow-[0_-10px_50px_-10px_rgba(168,85,247,0.4)] p-4 rounded-lg">
               {/* Header */}
               <div className="flex justify-between items-center mb-3 px-1">
@@ -81,11 +73,6 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
                 >
                   <X className="w-4 h-4" />
                 </Button>
-              </div>
-
-              {/* Display Area */}
-              <div className="w-full max-w-2xl mx-auto bg-input/50 rounded-lg p-3 mb-4 text-lg font-serif text-left min-h-[52px] break-words border border-border/50">
-                {value || <span className="text-muted-foreground">{placeholder}</span>}
               </div>
               
               {/* Keys */}
@@ -188,8 +175,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
                 </div>
               </div>
             </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
