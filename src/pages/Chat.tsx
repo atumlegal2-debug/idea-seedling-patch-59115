@@ -61,16 +61,22 @@ const Chat = () => {
         inputContainer: 'bg-sky-950/40 border-t-sky-400/30',
         inputForm: 'bg-transparent border-none'
     },
-    'sala-romeo': {
+    'sala-niki': {
         overlay: 'bg-gradient-to-b from-rose-950/80 via-red-950/90 to-black/95',
         header: 'bg-rose-950/60 border-b-rose-400/30',
         inputContainer: 'bg-rose-950/40 border-t-rose-400/30',
         inputForm: 'bg-transparent border-none'
     },
-    'sala-niki': {
+    'sala-romeo': {
         overlay: 'bg-gradient-to-b from-amber-950/80 via-yellow-950/90 to-black/95',
         header: 'bg-amber-950/60 border-b-amber-400/30',
         inputContainer: 'bg-amber-950/40 border-t-amber-400/30',
+        inputForm: 'bg-transparent border-none'
+    },
+    'dormitorio': {
+        overlay: 'bg-gradient-to-b from-stone-950/80 via-neutral-950/90 to-black/95',
+        header: 'bg-stone-950/60 border-b-stone-400/30',
+        inputContainer: 'bg-stone-950/40 border-t-stone-400/30',
         inputForm: 'bg-transparent border-none'
     },
     'default': {
@@ -87,6 +93,7 @@ const Chat = () => {
         case 'sala-wooyoung': return locationConfig['sala-wooyoung'];
         case 'sala-romeo': return locationConfig['sala-romeo'];
         case 'sala-niki': return locationConfig['sala-niki'];
+        case 'dormitorio': return locationConfig['dormitorio'];
         default: return locationConfig.default;
     }
   };
@@ -95,8 +102,9 @@ const Chat = () => {
     switch (locationId) {
         case 'floresta': return forestClassroom;
         case 'sala-wooyoung': return waterClassroom;
-        case 'sala-romeo': return fireClassroom;
-        case 'sala-niki': return earthClassroom;
+        case 'sala-niki': return fireClassroom;
+        case 'sala-romeo': return earthClassroom;
+        case 'dormitorio': return earthClassroom;
         default: return waterClassroom;
     }
   };
