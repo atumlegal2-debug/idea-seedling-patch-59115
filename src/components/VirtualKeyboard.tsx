@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Delete, Keyboard, CornerDownLeft } from "lucide-react";
+import { X, Delete, Keyboard, CornerDownLeft, Send } from "lucide-react";
 
 interface VirtualKeyboardProps {
   onType: (value: string) => void;
   value: string;
   placeholder?: string;
+  onSend?: () => void;
 }
 
-const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) => {
+const VirtualKeyboard = ({ onType, value, placeholder, onSend }: VirtualKeyboardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpperCase, setIsUpperCase] = useState(false);
+
+  const hasValue = value && value.length > 0;
 
   const keys = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
@@ -52,10 +55,14 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
           type="button"
           variant="outline"
           size="icon"
-          onClick={() => setIsOpen(!isOpen)}
-          className={`shrink-0 h-11 w-11 transition-all shadow-md ${isOpen ? 'bg-gradient-arcane text-white border-primary shadow-glow' : 'hover:border-primary/50'}`}
+          onClick={hasValue ? onSend : () => setIsOpen(!isOpen)}
+          className={`shrink-0 h-11 w-11 transition-all shadow-md ${
+            (hasValue || isOpen)
+              ? 'bg-gradient-arcane text-white border-primary shadow-glow'
+              : 'hover:border-primary/50'
+          }`}
         >
-          <Keyboard className="w-5 h-5" />
+          {hasValue ? <Send className="w-5 h-5" /> : <Keyboard className="w-5 h-5" />}
         </Button>
       </div>
 

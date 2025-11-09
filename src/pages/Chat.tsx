@@ -164,8 +164,7 @@ const Chat = () => {
     };
   }, [locationId, user]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendMessage = async () => {
     if (!newMessage.trim() || !user || !locationId) return;
 
     const content = newMessage.trim();
@@ -187,6 +186,11 @@ const Chat = () => {
       setMessages(current => current.filter(m => m.id !== optimisticMessage.id));
       setNewMessage(content);
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage();
   };
 
   const handleTyping = (value: string) => {
@@ -283,17 +287,15 @@ const Chat = () => {
         </div>
 
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
-          <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2", currentConfig.inputForm)}>
+          <form onSubmit={handleFormSubmit} className={cn("flex items-center gap-2", currentConfig.inputForm)}>
             <div className="flex-1">
               <VirtualKeyboard
                 value={newMessage}
                 onType={handleTyping}
                 placeholder="Digite sua runa..."
+                onSend={sendMessage}
               />
             </div>
-            <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-11 h-11 shadow-glow hover:opacity-90">
-              <Send className="w-5 h-5" />
-            </Button>
           </form>
         </div>
       </div>
