@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Delete, Keyboard } from "lucide-react";
+import { X, Delete, Keyboard, CornerDownLeft } from "lucide-react";
 
 interface VirtualKeyboardProps {
   onType: (value: string) => void;
@@ -19,7 +19,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
     ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
   ];
 
-  const specialKeys = [',', '.', '?', '!', '-', '@', '#'];
+  const specialKeys = [',', '.', '?', '!', '-', '@', '#', '*', '(', ')', '_', '+', '=', '/'];
 
   const handleKeyPress = (key: string) => {
     const char = isUpperCase ? key.toUpperCase() : key.toLowerCase();
@@ -34,8 +34,8 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
     onType(value + ' ');
   };
 
-  const handleClear = () => {
-    onType('');
+  const handleEnter = () => {
+    onType(value + '\n');
   };
 
   return (
@@ -151,19 +151,19 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleClear}
-                    className="h-12 px-3 font-heading bg-gradient-to-b from-background/70 to-background/50 hover:from-destructive/20 hover:to-destructive/10 border-border/50 hover:border-destructive/50 active:scale-95 transition-all shadow-sm text-xs"
-                  >
-                    Limpar
-                  </Button>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
                     onClick={handleBackspace}
                     className="h-12 px-3 font-heading gap-1 bg-gradient-to-b from-background/70 to-background/50 hover:from-destructive/20 hover:to-destructive/10 border-border/50 hover:border-destructive/50 active:scale-95 transition-all shadow-sm"
                   >
                     <Delete className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleEnter}
+                    className="h-12 px-3 font-heading bg-gradient-to-b from-background/80 to-background/60 hover:from-primary/20 hover:to-primary/10 border-border/50 hover:border-primary/50 active:scale-95 transition-all shadow-sm"
+                  >
+                    <CornerDownLeft className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
