@@ -39,7 +39,6 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<Map<string, number>>(new Map());
@@ -215,7 +214,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="relative h-dvh w-full flex flex-col bg-background overflow-hidden">
+    <div className="relative h-dvh w-full flex flex-col bg-background">
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-20" />
         <div className={cn("absolute inset-0", currentConfig.overlay)} />
@@ -285,22 +284,17 @@ const Chat = () => {
 
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
           <form onSubmit={handleSendMessage} className={cn("flex items-center gap-2", currentConfig.inputForm)}>
-            <div 
-              className="flex-1 px-3 py-2.5 rounded-lg border-2 border-input bg-background/80 backdrop-blur text-foreground min-h-11 flex items-center overflow-x-auto transition-all hover:border-primary/50 whitespace-pre-wrap break-words cursor-text"
-              onClick={() => setIsKeyboardOpen(true)}
-            >
-              {newMessage || <span className="text-muted-foreground">Digite sua runa...</span>}
+            <div className="flex-1">
+              <VirtualKeyboard
+                value={newMessage}
+                onType={handleTyping}
+                placeholder="Digite sua runa..."
+              />
             </div>
             <Button type="submit" size="icon" className="bg-gradient-arcane text-white rounded-full shrink-0 w-11 h-11 shadow-glow hover:opacity-90">
               <Send className="w-5 h-5" />
             </Button>
           </form>
-          <VirtualKeyboard
-            value={newMessage}
-            onType={handleTyping}
-            isOpen={isKeyboardOpen}
-            setIsOpen={setIsKeyboardOpen}
-          />
         </div>
       </div>
     </div>
