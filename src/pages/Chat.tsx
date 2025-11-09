@@ -214,7 +214,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col bg-background">
+    <div className="relative h-dvh w-full flex flex-col bg-background">
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="Academia Arcana" className="h-full w-full object-cover opacity-20" />
         <div className={cn("absolute inset-0", currentConfig.overlay)} />
