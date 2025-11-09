@@ -38,10 +38,14 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
     onType(value + '\n');
   };
 
+  const handleClear = () => {
+    onType('');
+  };
+
   return (
     <div className="w-full">
       <div className="flex gap-2 items-center">
-        <div className="flex-1 px-3 py-2.5 rounded-lg border-2 border-input bg-background/80 backdrop-blur text-foreground min-h-11 flex items-center overflow-x-auto transition-all hover:border-primary/50">
+        <div className="flex-1 px-3 py-2.5 rounded-lg border-2 border-input bg-background/80 backdrop-blur text-foreground min-h-11 flex items-center overflow-x-auto transition-all hover:border-primary/50 whitespace-pre-wrap break-words">
           {value || <span className="text-muted-foreground">{placeholder}</span>}
         </div>
         <Button
@@ -125,7 +129,7 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
                 </div>
                 
                 {/* Action buttons */}
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-1.5 pt-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -146,6 +150,15 @@ const VirtualKeyboard = ({ onType, value, placeholder }: VirtualKeyboardProps) =
                     className="h-12 flex-1 font-heading bg-gradient-to-b from-background/80 to-background/60 hover:from-primary/20 hover:to-primary/10 border-border/50 hover:border-primary/50 active:scale-[0.98] transition-all shadow-sm"
                   >
                     Espaço
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClear}
+                    className="h-12 px-3 font-heading bg-gradient-to-b from-background/70 to-background/50 hover:from-destructive/20 hover:to-destructive/10 border-border/50 hover:border-destructive/50 active:scale-95 transition-all shadow-sm text-xs"
+                  >
+                    Limpar
                   </Button>
                   
                   <Button
