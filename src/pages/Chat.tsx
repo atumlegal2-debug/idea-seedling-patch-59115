@@ -207,6 +207,37 @@ const Chat = () => {
       toast.error('Erro ao enviar mensagem.');
       setMessages(current => current.filter(m => m.id !== optimisticMessage.id));
       setNewMessage(content);
+      return;
+    }
+
+    // Detectar se mencionou Wandinha
+    const mentionsWandinha = content.toLowerCase().includes('wandinha') || 
+                            content.toLowerCase().includes('@wandinha');
+
+    if (mentionsWandinha) {
+      // Buscar mensagens recentes para contexto
+      const { data: recentMsgs } = await supabase
+        .from('messages')
+        .select('content, users(name)')
+        .eq('location_name', locationId)
+        .order('created_at', { ascending: false })
+        .limit(8);
+
+      // Chamar edge function para gerar resposta da Wandinha
+      supabase.functions.invoke('wandinha-chat', {
+        body: {
+          location_name: locationId,
+          recent_messages: recentMsgs?.map((m: any) => ({
+            content: m.content,
+            user_name: m.users?.name || 'Desconhecido'
+          })) || [],
+          trigger_message: content
+        }
+      }).then(({ error: wandinhaError }) => {
+        if (wandinhaError) {
+          console.error('Erro ao invocar Wandinha:', wandinhaError);
+        }
+      });
     }
   };
 
