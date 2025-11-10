@@ -80,7 +80,7 @@ serve(async (req) => {
   }
 
   try {
-    const { location_name, recent_messages, trigger_message } = await req.json();
+    const { location_name, recent_messages, trigger_message, is_spontaneous } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -97,7 +97,18 @@ serve(async (req) => {
     }
 
     // Montar prompt do usuário
-    const userPrompt = `${contextText}\n\nMensagem que te mencionou: "${trigger_message}"\n\nResponda como Wandinha Addams responderia neste contexto.`;
+    let userPrompt = '';
+    if (is_spontaneous) {
+      // Aparição espontânea - pode ser apenas uma cena/ação
+      userPrompt = `${contextText}\n\nVocê está observando esta conversa de longe. Faça UMA das seguintes ações (escolha aleatoriamente):
+1. Envie APENAS uma ação sombria entre asteriscos (sem texto adicional), mostrando o que você está fazendo no ambiente. Exemplos: "*passa silenciosamente pela sala, seu olhar fixo em algo que ninguém mais vê*" ou "*afia uma lâmina imaginária com expressão entediada*"
+2. OU faça um comentário cínico curto sobre o que estão dizendo (máximo 1 frase + 1 ação)
+
+Priorize opção 1 (apenas ação) em 60% das vezes para ser mais sutil e misteriosa.`;
+    } else {
+      // Menção direta - responda normalmente
+      userPrompt = `${contextText}\n\nMensagem que te mencionou: "${trigger_message}"\n\nResponda como Wandinha Addams responderia neste contexto.`;
+    }
 
     // Chamar Lovable AI
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

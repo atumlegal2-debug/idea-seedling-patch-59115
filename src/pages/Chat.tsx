@@ -210,11 +210,14 @@ const Chat = () => {
       return;
     }
 
-    // Detectar se mencionou Wandinha
+    // Detectar se mencionou Wandinha diretamente
     const mentionsWandinha = content.toLowerCase().includes('wandinha') || 
                             content.toLowerCase().includes('@wandinha');
 
-    if (mentionsWandinha) {
+    // 15% de chance de Wandinha aparecer espontaneamente (sem menção)
+    const randomAppearance = !mentionsWandinha && Math.random() < 0.15;
+
+    if (mentionsWandinha || randomAppearance) {
       // Buscar mensagens recentes para contexto
       const { data: recentMsgs } = await supabase
         .from('messages')
@@ -231,7 +234,8 @@ const Chat = () => {
             content: m.content,
             user_name: m.users?.name || 'Desconhecido'
           })) || [],
-          trigger_message: content
+          trigger_message: content,
+          is_spontaneous: randomAppearance // Indica se foi aparição espontânea
         }
       }).then(({ error: wandinhaError }) => {
         if (wandinhaError) {
