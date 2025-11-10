@@ -21,12 +21,20 @@ interface Message {
   content: string;
   created_at: string;
   user_id: string;
+  reply_to_id: number | null;
   users: {
     name: string;
     photo_url: string | null;
     element: string | null;
     updated_at: string;
   };
+  replied_message?: {
+    id: number;
+    content: string;
+    users: {
+      name: string;
+    };
+  } | null;
 }
 
 interface TypingUser {
@@ -42,6 +50,8 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<Map<string, number>>(new Map());
@@ -117,7 +127,11 @@ const Chat = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('messages')
-      .select('*, users(name, photo_url, element, updated_at)')
+      .select(`
+        *,
+        users(name, photo_url, element, updated_at),
+        replied_message:reply_to_id(id, content, users(name))
+      `)
       .eq('location_name', locationId)
       .order('created_at', { ascending: false });
 
@@ -195,18 +209,31 @@ const Chat = () => {
       content,
       created_at: new Date().toISOString(),
       user_id: user.id,
+      reply_to_id: replyingTo?.id || null,
       users: { name: user.name, photo_url: user.profilePicture, element: user.element, updated_at: user.updated_at },
+      replied_message: replyingTo ? {
+        id: replyingTo.id,
+        content: replyingTo.content,
+        users: { name: replyingTo.users.name }
+      } : null
     };
 
     setMessages(current => [optimisticMessage, ...current]);
     setNewMessage('');
+    setReplyingTo(null);
 
-    const { error } = await supabase.from('messages').insert({ content, user_id: user.id, location_name: locationId });
+    const { error } = await supabase.from('messages').insert({ 
+      content, 
+      user_id: user.id, 
+      location_name: locationId,
+      reply_to_id: replyingTo?.id || null 
+    });
 
     if (error) {
       toast.error('Erro ao enviar mensagem.');
       setMessages(current => current.filter(m => m.id !== optimisticMessage.id));
       setNewMessage(content);
+      setReplyingTo(replyingTo);
       return;
     }
 
@@ -316,6 +343,21 @@ const Chat = () => {
     return <>{parts}</>;
   };
 
+  const handleLongPressStart = (msg: Message) => {
+    const timer = window.setTimeout(() => {
+      setReplyingTo(msg);
+      toast.info(`Respondendo para ${msg.users.name}`);
+    }, 500);
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
   const getLocationIcon = () => {
     if (locationId?.includes('floresta')) return <Trees className="w-6 h-6 text-green-400" />;
     if (locationId?.includes('sala')) return <BookOpen className="w-6 h-6 text-primary" />;
@@ -363,9 +405,22 @@ const Chat = () => {
                       <AvatarImage src={msg.users.photo_url ? `${msg.users.photo_url}?t=${new Date(msg.users.updated_at).getTime()}` : undefined} />
                       <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col gap-1 items-start max-w-md">
+                    <div 
+                      className="flex flex-col gap-1 items-start max-w-md"
+                      onTouchStart={() => handleLongPressStart(msg)}
+                      onTouchEnd={handleLongPressEnd}
+                      onMouseDown={() => handleLongPressStart(msg)}
+                      onMouseUp={handleLongPressEnd}
+                      onMouseLeave={handleLongPressEnd}
+                    >
                       <p className="text-secondary text-sm font-bold font-heading ml-3">{msg.users.name}</p>
-                      <div className="text-base font-normal leading-normal flex rounded-xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
+                      <div className="text-base font-normal leading-normal flex flex-col rounded-xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
+                        {msg.replied_message && (
+                          <div className="mb-2 pb-2 border-b border-border/50">
+                            <p className="text-xs text-muted-foreground font-semibold">{msg.replied_message.users.name}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{msg.replied_message.content}</p>
+                          </div>
+                        )}
                         <div className="whitespace-pre-wrap break-words">{formatMessage(msg.content)}</div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 ml-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
@@ -374,9 +429,22 @@ const Chat = () => {
                 )}
                 {msg.user_id === user?.id && (
                   <>
-                    <div className="flex flex-col gap-1 items-end max-w-md">
+                    <div 
+                      className="flex flex-col gap-1 items-end max-w-md"
+                      onTouchStart={() => handleLongPressStart(msg)}
+                      onTouchEnd={handleLongPressEnd}
+                      onMouseDown={() => handleLongPressStart(msg)}
+                      onMouseUp={handleLongPressEnd}
+                      onMouseLeave={handleLongPressEnd}
+                    >
                       <p className="text-primary text-sm font-bold font-heading mr-3">{msg.users.name}</p>
-                      <div className="text-base font-normal leading-normal flex rounded-xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
+                      <div className="text-base font-normal leading-normal flex flex-col rounded-xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
+                        {msg.replied_message && (
+                          <div className="mb-2 pb-2 border-b border-white/30">
+                            <p className="text-xs text-white/70 font-semibold">{msg.replied_message.users.name}</p>
+                            <p className="text-xs text-white/70 line-clamp-1">{msg.replied_message.content}</p>
+                          </div>
+                        )}
                         <div className="whitespace-pre-wrap break-words">{formatMessage(msg.content)}</div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 mr-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
@@ -393,6 +461,22 @@ const Chat = () => {
         </div>
 
         <div className={cn("backdrop-blur-sm p-4 pt-2 border-t shrink-0", currentConfig.inputContainer)}>
+          {replyingTo && (
+            <div className="mb-2 px-3 py-2 bg-muted/50 rounded-lg flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">{replyingTo.users.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setReplyingTo(null)}
+                className="h-6 w-6 p-0 shrink-0"
+              >
+                ✕
+              </Button>
+            </div>
+          )}
           <form onSubmit={handleFormSubmit} className={cn("flex items-center gap-2", currentConfig.inputForm)}>
             <div className="flex-1">
               <VirtualKeyboard

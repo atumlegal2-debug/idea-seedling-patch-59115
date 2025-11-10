@@ -220,6 +220,7 @@ export type Database = {
           created_at: string
           id: number
           location_name: string
+          reply_to_id: number | null
           user_id: string
         }
         Insert: {
@@ -227,6 +228,7 @@ export type Database = {
           created_at?: string
           id?: number
           location_name: string
+          reply_to_id?: number | null
           user_id: string
         }
         Update: {
@@ -234,9 +236,17 @@ export type Database = {
           created_at?: string
           id?: number
           location_name?: string
+          reply_to_id?: number | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_user_id_fkey"
             columns: ["user_id"]
