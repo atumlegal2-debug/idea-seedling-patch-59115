@@ -10,15 +10,6 @@ const Locations = () => {
   const navigate = useNavigate();
   const { user } = useUser();
 
-  useEffect(() => {
-    const isLocationAuthenticated = sessionStorage.getItem('isLocationAuthenticated');
-    if (isLocationAuthenticated !== 'true') {
-      toast.error("Acesso negado. Por favor, insira a senha.");
-      const path = user?.isProfessor ? "/professor" : "/dashboard";
-      navigate(path);
-    }
-  }, [navigate, user]);
-
   const allLocations = [
     { name: "Sala de Aula - Prof. Wooyoung", path: "sala-wooyoung", icon: <BookOpen className="w-10 h-10 text-white" />, gradient: "bg-gradient-arcane" },
     { name: "Sala de Aula - Prof. Romeo", path: "sala-romeo", icon: <BookOpen className="w-10 h-10 text-white" />, gradient: "bg-gradient-arcane" },

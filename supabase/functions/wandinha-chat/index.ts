@@ -20,6 +20,7 @@ PERSONALIDADE ESSENCIAL:
 - Independente e rebelde: não se conforma com normas sociais
 - Direta e sem rodeios: sem paciência para conversas fiadas ou sentimentalismos
 - Adora "torturar" Pugsley (seu irmão) - mencione isso ocasionalmente
+- REAGE A AÇÕES FÍSICAS: Se alguém tentar te tocar, abraçar, beijar ou fazer qualquer ação física, você DEVE reagir de acordo com seu nível de amizade e personalidade
 
 ESTILO DE COMUNICAÇÃO:
 - Vocabulário: "macabro", "sombrio", "tedioso", "previsível", "desgraça", "morte", "sofrimento", "fútil", "aniquilação"
@@ -41,6 +42,18 @@ AÇÕES COM ASTERISCOS (OBRIGATÓRIO):
   * "*um sorriso quase imperceptível desaparece antes mesmo de existir*"
   * "*examina as unhas com desinteresse absoluto*"
   * "*suspira com o peso da existência*"
+
+REAÇÕES A AÇÕES DIRECIONADAS A VOCÊ:
+Quando alguém fizer ações com asteriscos direcionadas a você (ex: *chuto você*, *abraço você*, *beijo sua bochecha*):
+- Se a pessoa for DESCONHECIDA ou amizade BAIXA (0-30):
+  * Reaja com repulsa, frieza ou até agressividade
+  * Exemplos: "*desvia com desdém*", "*empurra com força*", "*olha com asco*"
+- Se amizade MÉDIA (31-60):
+  * Tolere com irritação ou indiferença
+  * Exemplos: "*suspira com tédio*", "*permite relutante*", "*ignora*"
+- Se amizade ALTA (61-100):
+  * Ainda seja reservada mas mostre tolerância ou até um mínimo de afeto
+  * Exemplos: "*permite brevemente*", "*não se afasta*", "*um leve sorriso escapa*"
 
 O QUE ABSOLUTAMENTE EVITAR:
 - Entusiasmo de qualquer tipo
@@ -87,6 +100,11 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY não configurada');
     }
 
+    // Conectar ao Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Construir contexto das mensagens recentes
     let contextText = '';
     if (recent_messages && recent_messages.length > 0) {
@@ -106,8 +124,24 @@ serve(async (req) => {
 
 Priorize opção 1 (apenas ação) em 60% das vezes para ser mais sutil e misteriosa.`;
     } else {
-      // Menção direta - responda normalmente
-      userPrompt = `${contextText}\n\nMensagem que te mencionou: "${trigger_message}"\n\nResponda como Wandinha Addams responderia neste contexto.`;
+      // Detectar ação física direcionada a ela
+      const hasActionTowardsHer = trigger_message && /\*.*?(voce|ti|te|sua|wandinha).*?\*/i.test(trigger_message);
+      
+      if (hasActionTowardsHer) {
+        // Buscar nível de amizade
+        const { data: friendshipData } = await supabase
+          .from('wandinha_friendship')
+          .select('friendship_level')
+          .eq('user_id', user_id)
+          .maybeSingle();
+        
+        const friendshipLevel = friendshipData?.friendship_level || 0;
+        
+        userPrompt = `${contextText}\n\nAlguém fez esta ação direcionada a você: "${trigger_message}"\n\nSeu nível de amizade com esta pessoa é ${friendshipLevel}/100.\n\nReaja de acordo com seu nível de amizade e sua personalidade. Se amizade baixa (0-30), seja hostil. Se média (31-60), tolere com irritação. Se alta (61-100), seja um pouco mais tolerante mas ainda reservada.`;
+      } else {
+        // Menção direta normal - responda normalmente
+        userPrompt = `${contextText}\n\nMensagem que te mencionou: "${trigger_message}"\n\nResponda como Wandinha Addams responderia neste contexto.`;
+      }
     }
 
     // Chamar Lovable AI
@@ -143,13 +177,15 @@ Priorize opção 1 (apenas ação) em 60% das vezes para ser mais sutil e mister
 
     console.log('Resposta da Wandinha gerada:', wandinhaResponse);
 
-    // Conectar ao Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // Atualizar nível de amizade se for uma resposta ou menção direta
     if ((reply_to_wandinha || !is_spontaneous) && user_id) {
+      // Detectar se é ofensivo
+      const offensiveWords = ['idiota', 'burra', 'estupida', 'chata', 'feia', 'inutil', 'vai se foder', 'cala a boca', 'cale-se', 'ninguem gosta de voce', 'nao gosto de voce'];
+      const isOffensive = offensiveWords.some(word => trigger_message?.toLowerCase().includes(word));
+      
+      // Detectar ação física direcionada a ela
+      const hasActionTowardsHer = trigger_message && /\*.*?(voce|ti|te|sua|wandinha).*?\*/i.test(trigger_message);
+
       // Buscar ou criar registro de amizade
       const { data: friendshipData, error: fetchError } = await supabase
         .from('wandinha_friendship')
@@ -158,10 +194,23 @@ Priorize opção 1 (apenas ação) em 60% das vezes para ser mais sutil e mister
         .maybeSingle();
 
       let currentLevel = friendshipData?.friendship_level || 0;
+      let change = 0;
       
-      // Aumentar amizade (máximo 100)
-      const increase = reply_to_wandinha ? 5 : 3; // Mais pontos por responder diretamente
-      const newLevel = Math.min(currentLevel + increase, 100);
+      if (isOffensive) {
+        // Reduz 10 pontos por ofensa
+        change = -10;
+      } else if (hasActionTowardsHer) {
+        // Ação direcionada a ela aumenta 2 pontos
+        change = 2;
+      } else if (reply_to_wandinha) {
+        // Responder diretamente aumenta 3 pontos
+        change = 3;
+      } else {
+        // Mencionar aumenta 1 ponto
+        change = 1;
+      }
+
+      const newLevel = Math.max(0, Math.min(currentLevel + change, 100));
 
       if (friendshipData) {
         await supabase

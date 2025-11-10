@@ -64,37 +64,37 @@ const Chat = () => {
 
   const locationConfig = {
     'floresta': {
-        overlay: 'bg-gradient-to-b from-emerald-950/80 via-green-950/90 to-black/95',
+        overlay: 'bg-gradient-to-b from-emerald-950/30 via-green-950/40 to-black/50',
         header: 'bg-emerald-950/60 border-b-emerald-400/30',
-        inputContainer: 'bg-emerald-950/40 border-t-emerald-400/30',
+        inputContainer: 'bg-emerald-950/60 border-t-emerald-400/30',
         inputForm: 'bg-transparent border-none'
     },
     'sala-wooyoung': {
-        overlay: 'bg-gradient-to-b from-sky-950/80 via-blue-950/90 to-black/95',
+        overlay: 'bg-gradient-to-b from-sky-950/30 via-blue-950/40 to-black/50',
         header: 'bg-sky-950/60 border-b-sky-400/30',
-        inputContainer: 'bg-sky-950/40 border-t-sky-400/30',
+        inputContainer: 'bg-sky-950/60 border-t-sky-400/30',
         inputForm: 'bg-transparent border-none'
     },
     'sala-niki': {
-        overlay: 'bg-gradient-to-b from-rose-950/80 via-red-950/90 to-black/95',
+        overlay: 'bg-gradient-to-b from-rose-950/30 via-red-950/40 to-black/50',
         header: 'bg-rose-950/60 border-b-rose-400/30',
-        inputContainer: 'bg-rose-950/40 border-t-rose-400/30',
+        inputContainer: 'bg-rose-950/60 border-t-rose-400/30',
         inputForm: 'bg-transparent border-none'
     },
     'sala-romeo': {
-        overlay: 'bg-gradient-to-b from-amber-950/80 via-yellow-950/90 to-black/95',
+        overlay: 'bg-gradient-to-b from-amber-950/30 via-yellow-950/40 to-black/50',
         header: 'bg-amber-950/60 border-b-amber-400/30',
-        inputContainer: 'bg-amber-950/40 border-t-amber-400/30',
+        inputContainer: 'bg-amber-950/60 border-t-amber-400/30',
         inputForm: 'bg-transparent border-none'
     },
     'dormitorio': {
-        overlay: 'bg-gradient-to-b from-stone-950/80 via-neutral-950/90 to-black/95',
+        overlay: 'bg-gradient-to-b from-stone-950/30 via-neutral-950/40 to-black/50',
         header: 'bg-stone-950/60 border-b-stone-400/30',
-        inputContainer: 'bg-stone-950/40 border-t-stone-400/30',
+        inputContainer: 'bg-stone-950/60 border-t-stone-400/30',
         inputForm: 'bg-transparent border-none'
     },
     'default': {
-        overlay: 'bg-gradient-to-b from-background/90 via-background/80 to-background/90',
+        overlay: 'bg-gradient-to-b from-background/40 via-background/30 to-background/50',
         header: 'bg-background/80 border-b-border',
         inputContainer: 'bg-background/80 border-t-border',
         inputForm: 'bg-transparent border-none'
@@ -203,6 +203,22 @@ const Chat = () => {
       typingTimeoutRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     };
   }, [locationId, user]);
+
+  const clearMessages = async () => {
+    if (!locationId) return;
+    
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('location_name', locationId);
+    
+    if (error) {
+      toast.error('Erro ao limpar mensagens.');
+    } else {
+      setMessages([]);
+      toast.success('Mensagens limpas com sucesso!');
+    }
+  };
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !user || !locationId) return;
@@ -392,7 +408,17 @@ const Chat = () => {
               <h2 className="text-foreground text-lg font-bold font-heading leading-tight tracking-wide">{locationName}</h2>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-10 w-10"><MoreVertical className="w-5 h-5" /></Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearMessages}
+              className="h-10 text-xs"
+            >
+              Limpar Chat
+            </Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10"><MoreVertical className="w-5 h-5" /></Button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-4">
