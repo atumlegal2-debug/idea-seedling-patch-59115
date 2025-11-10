@@ -267,6 +267,55 @@ const Chat = () => {
     return emojis[element] || "?";
   };
 
+  const formatMessage = (content: string) => {
+    const parts = [];
+    let currentIndex = 0;
+    const asteriskRegex = /\*([^*]+)\*/g;
+    let match;
+
+    while ((match = asteriskRegex.exec(content)) !== null) {
+      // Texto antes do asterisco (fala normal)
+      if (match.index > currentIndex) {
+        const normalText = content.slice(currentIndex, match.index).trim();
+        if (normalText) {
+          parts.push(
+            <span key={`text-${currentIndex}`}>
+              — {normalText}
+            </span>
+          );
+        }
+      }
+
+      // Texto entre asteriscos (cena em itálico)
+      parts.push(
+        <em key={`italic-${match.index}`} className="text-muted-foreground">
+          {match[1]}
+        </em>
+      );
+
+      currentIndex = match.index + match[0].length;
+    }
+
+    // Texto restante após último asterisco
+    if (currentIndex < content.length) {
+      const remaining = content.slice(currentIndex).trim();
+      if (remaining) {
+        parts.push(
+          <span key={`text-${currentIndex}`}>
+            — {remaining}
+          </span>
+        );
+      }
+    }
+
+    // Se não há asteriscos, apenas adiciona travessão
+    if (parts.length === 0) {
+      return <span>— {content}</span>;
+    }
+
+    return <>{parts}</>;
+  };
+
   const getLocationIcon = () => {
     if (locationId?.includes('floresta')) return <Trees className="w-6 h-6 text-green-400" />;
     if (locationId?.includes('sala')) return <BookOpen className="w-6 h-6 text-primary" />;
@@ -317,7 +366,7 @@ const Chat = () => {
                     <div className="flex flex-col gap-1 items-start max-w-md">
                       <p className="text-secondary text-sm font-bold font-heading ml-3">{msg.users.name}</p>
                       <div className="text-base font-normal leading-normal flex rounded-xl rounded-bl-none px-4 py-3 bg-muted text-foreground">
-                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        <div className="whitespace-pre-wrap break-words">{formatMessage(msg.content)}</div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 ml-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
                     </div>
@@ -328,7 +377,7 @@ const Chat = () => {
                     <div className="flex flex-col gap-1 items-end max-w-md">
                       <p className="text-primary text-sm font-bold font-heading mr-3">{msg.users.name}</p>
                       <div className="text-base font-normal leading-normal flex rounded-xl rounded-br-none px-4 py-3 bg-gradient-arcane text-white">
-                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        <div className="whitespace-pre-wrap break-words">{formatMessage(msg.content)}</div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 mr-3">{format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}</p>
                     </div>
