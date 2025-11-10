@@ -143,10 +143,27 @@ Priorize opção 1 (apenas ação) em 60% das vezes para ser mais sutil e mister
 
     console.log('Resposta da Wandinha gerada:', wandinhaResponse);
 
-    // Inserir mensagem no banco de dados
+    // Conectar ao Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Enviar evento de "typing" via broadcast
+    const channel = supabase.channel(`chat-realtime:${location_name}`);
+    await channel.subscribe();
+    
+    await channel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { name: 'Wandinha Addams', id: WANDINHA_USER_ID },
+    });
+
+    // Aguardar um pouco para simular digitação (1-2 segundos)
+    const typingDelay = 1000 + Math.random() * 1000;
+    await new Promise(resolve => setTimeout(resolve, typingDelay));
+
+    // Remover canal
+    await supabase.removeChannel(channel);
 
     const { error: insertError } = await supabase
       .from('messages')
