@@ -80,7 +80,7 @@ serve(async (req) => {
   }
 
   try {
-    const { location_name, recent_messages, trigger_message, is_spontaneous } = await req.json();
+    const { location_name, recent_messages, trigger_message, is_spontaneous, reply_to_wandinha, user_id } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -147,6 +147,40 @@ Priorize opção 1 (apenas ação) em 60% das vezes para ser mais sutil e mister
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Atualizar nível de amizade se for uma resposta ou menção direta
+    if ((reply_to_wandinha || !is_spontaneous) && user_id) {
+      // Buscar ou criar registro de amizade
+      const { data: friendshipData, error: fetchError } = await supabase
+        .from('wandinha_friendship')
+        .select('*')
+        .eq('user_id', user_id)
+        .maybeSingle();
+
+      let currentLevel = friendshipData?.friendship_level || 0;
+      
+      // Aumentar amizade (máximo 100)
+      const increase = reply_to_wandinha ? 5 : 3; // Mais pontos por responder diretamente
+      const newLevel = Math.min(currentLevel + increase, 100);
+
+      if (friendshipData) {
+        await supabase
+          .from('wandinha_friendship')
+          .update({ 
+            friendship_level: newLevel,
+            last_interaction: new Date().toISOString()
+          })
+          .eq('user_id', user_id);
+      } else {
+        await supabase
+          .from('wandinha_friendship')
+          .insert({ 
+            user_id,
+            friendship_level: newLevel,
+            last_interaction: new Date().toISOString()
+          });
+      }
+    }
 
     // Enviar evento de "typing" via broadcast
     const channel = supabase.channel(`chat-realtime:${location_name}`);

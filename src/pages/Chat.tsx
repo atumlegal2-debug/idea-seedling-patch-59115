@@ -15,6 +15,7 @@ import forestClassroom from "@/assets/classroom-forest.jpg";
 import { cn } from '@/lib/utils';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import VirtualKeyboard from '@/components/VirtualKeyboard';
+import WandinhaProfile from '@/components/WandinhaProfile';
 
 interface Message {
   id: number;
@@ -52,6 +53,9 @@ const Chat = () => {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
+  const [wandinhaProfileOpen, setWandinhaProfileOpen] = useState(false);
+
+  const WANDINHA_USER_ID = '00000000-0000-0000-0000-000000000001';
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<Map<string, number>>(new Map());
@@ -241,10 +245,13 @@ const Chat = () => {
     const mentionsWandinha = content.toLowerCase().includes('wandinha') || 
                             content.toLowerCase().includes('@wandinha');
 
-    // 15% de chance de Wandinha aparecer espontaneamente (sem menção)
-    const randomAppearance = !mentionsWandinha && Math.random() < 0.15;
+    // Detectar se está respondendo a Wandinha
+    const replyingToWandinha = replyingTo?.user_id === WANDINHA_USER_ID;
 
-    if (mentionsWandinha || randomAppearance) {
+    // 15% de chance de Wandinha aparecer espontaneamente (sem menção)
+    const randomAppearance = !mentionsWandinha && !replyingToWandinha && Math.random() < 0.15;
+
+    if (mentionsWandinha || randomAppearance || replyingToWandinha) {
       // Buscar mensagens recentes para contexto
       const { data: recentMsgs } = await supabase
         .from('messages')
@@ -262,7 +269,9 @@ const Chat = () => {
             user_name: m.users?.name || 'Desconhecido'
           })) || [],
           trigger_message: content,
-          is_spontaneous: randomAppearance // Indica se foi aparição espontânea
+          is_spontaneous: randomAppearance,
+          reply_to_wandinha: replyingToWandinha,
+          user_id: user.id
         }
       }).then(({ error: wandinhaError }) => {
         if (wandinhaError) {
@@ -401,7 +410,10 @@ const Chat = () => {
               <div key={msg.id} className={`flex items-end gap-3 ${msg.user_id === user?.id ? 'justify-end' : 'justify-start'}`}>
                 {msg.user_id !== user?.id && (
                   <>
-                    <Avatar className="w-10 h-10 shrink-0 self-start border-2 border-primary/50">
+                    <Avatar 
+                      className="w-10 h-10 shrink-0 self-start border-2 border-primary/50 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => msg.user_id === WANDINHA_USER_ID && setWandinhaProfileOpen(true)}
+                    >
                       <AvatarImage src={msg.users.photo_url ? `${msg.users.photo_url}?t=${new Date(msg.users.updated_at).getTime()}` : undefined} />
                       <AvatarFallback>{getElementEmoji(msg.users.element)}</AvatarFallback>
                     </Avatar>
@@ -489,6 +501,11 @@ const Chat = () => {
           </form>
         </div>
       </div>
+
+      <WandinhaProfile 
+        open={wandinhaProfileOpen} 
+        onOpenChange={setWandinhaProfileOpen}
+      />
     </div>
   );
 };
