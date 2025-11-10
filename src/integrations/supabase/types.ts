@@ -14,127 +14,219 @@ export type Database = {
   }
   public: {
     Tables: {
-      activities: {
+      active_diseases: {
         Row: {
-          created_at: string | null
+          cured_at: string | null
+          disease_id: string
           id: string
-          questions: Json
-          text: string
-          title: string
-          xp_reward: number
+          infected_at: string
+          is_active: boolean
+          profile_id: string
         }
         Insert: {
-          created_at?: string | null
+          cured_at?: string | null
+          disease_id: string
           id?: string
-          questions: Json
-          text: string
-          title: string
-          xp_reward: number
+          infected_at?: string
+          is_active?: boolean
+          profile_id: string
         }
         Update: {
-          created_at?: string | null
+          cured_at?: string | null
+          disease_id?: string
           id?: string
-          questions?: Json
-          text?: string
-          title?: string
-          xp_reward?: number
-        }
-        Relationships: []
-      }
-      activity_submissions: {
-        Row: {
-          activity_id: string
-          answers: Json
-          created_at: string | null
-          graded_at: string | null
-          id: string
-          score: number | null
-          status: string
-          student_id: string
-        }
-        Insert: {
-          activity_id: string
-          answers: Json
-          created_at?: string | null
-          graded_at?: string | null
-          id?: string
-          score?: number | null
-          status?: string
-          student_id: string
-        }
-        Update: {
-          activity_id?: string
-          answers?: Json
-          created_at?: string | null
-          graded_at?: string | null
-          id?: string
-          score?: number | null
-          status?: string
-          student_id?: string
+          infected_at?: string
+          is_active?: boolean
+          profile_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "activity_submissions_activity_id_fkey"
-            columns: ["activity_id"]
+            foreignKeyName: "active_diseases_disease_id_fkey"
+            columns: ["disease_id"]
             isOneToOne: false
-            referencedRelation: "activities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activity_submissions_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "diseases"
             referencedColumns: ["id"]
           },
         ]
       }
-      app_state: {
+      custom_menu_items: {
         Row: {
+          alcoholism_effect: number | null
           created_at: string
+          created_by_profile_id: string
+          display_order: number | null
+          establishment: string
+          hunger_effect: number | null
           id: string
-          updated_at: string
-          used_challenges: string[] | null
-          used_users: string[] | null
+          image_url: string | null
+          is_active: boolean | null
+          is_on_sale: boolean | null
+          item_description: string
+          item_name: string
+          item_type: string
+          preparation_time: number
+          price: number
+          sale_price: number | null
+          thirst_effect: number | null
         }
         Insert: {
+          alcoholism_effect?: number | null
           created_at?: string
+          created_by_profile_id: string
+          display_order?: number | null
+          establishment: string
+          hunger_effect?: number | null
           id?: string
-          updated_at?: string
-          used_challenges?: string[] | null
-          used_users?: string[] | null
+          image_url?: string | null
+          is_active?: boolean | null
+          is_on_sale?: boolean | null
+          item_description: string
+          item_name: string
+          item_type: string
+          preparation_time?: number
+          price?: number
+          sale_price?: number | null
+          thirst_effect?: number | null
         }
         Update: {
+          alcoholism_effect?: number | null
           created_at?: string
+          created_by_profile_id?: string
+          display_order?: number | null
+          establishment?: string
+          hunger_effect?: number | null
           id?: string
-          updated_at?: string
-          used_challenges?: string[] | null
-          used_users?: string[] | null
+          image_url?: string | null
+          is_active?: boolean | null
+          is_on_sale?: boolean | null
+          item_description?: string
+          item_name?: string
+          item_type?: string
+          preparation_time?: number
+          price?: number
+          sale_price?: number | null
+          thirst_effect?: number | null
         }
         Relationships: []
       }
-      challenges: {
+      daily_item_creations: {
         Row: {
-          challenge_text: string
-          created_at: string
+          creation_date: string
+          establishment: string
           id: string
-          profile_id: string | null
+          items_created: number
+          last_creation_at: string | null
+          profile_id: string
         }
         Insert: {
-          challenge_text: string
-          created_at?: string
+          creation_date?: string
+          establishment: string
           id?: string
-          profile_id?: string | null
+          items_created?: number
+          last_creation_at?: string | null
+          profile_id: string
         }
         Update: {
-          challenge_text?: string
-          created_at?: string
+          creation_date?: string
+          establishment?: string
           id?: string
-          profile_id?: string | null
+          items_created?: number
+          last_creation_at?: string | null
+          profile_id?: string
+        }
+        Relationships: []
+      }
+      diseases: {
+        Row: {
+          description: string
+          emoji_description: string
+          health_loss: number
+          hospital_time: number
+          id: string
+          image_url: string | null
+          name: string
+          symptoms: string
+        }
+        Insert: {
+          description: string
+          emoji_description: string
+          health_loss: number
+          hospital_time: number
+          id?: string
+          image_url?: string | null
+          name: string
+          symptoms: string
+        }
+        Update: {
+          description?: string
+          emoji_description?: string
+          health_loss?: number
+          hospital_time?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          symptoms?: string
+        }
+        Relationships: []
+      }
+      drink_collection: {
+        Row: {
+          drink_id: string
+          id: string
+          profile_id: string
+          quantity: number
+          unlocked_at: string
+        }
+        Insert: {
+          drink_id: string
+          id?: string
+          profile_id: string
+          quantity?: number
+          unlocked_at?: string
+        }
+        Update: {
+          drink_id?: string
+          id?: string
+          profile_id?: string
+          quantity?: number
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
+      employee_preparations: {
+        Row: {
+          created_at: string | null
+          establishment: string
+          finish_at: string | null
+          id: string
+          item_name: string
+          item_type: string
+          profile_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          establishment: string
+          finish_at?: string | null
+          id?: string
+          item_name: string
+          item_type: string
+          profile_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          establishment?: string
+          finish_at?: string | null
+          id?: string
+          item_name?: string
+          item_type?: string
+          profile_id?: string
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "challenges_profile_id_fkey"
+            foreignKeyName: "employee_preparations_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -142,307 +234,531 @@ export type Database = {
           },
         ]
       }
-      locations: {
+      establishment_employees: {
         Row: {
-          created_at: string | null
-          description: string | null
-          has_music: boolean | null
+          establishment: string
+          hired_at: string
           id: string
-          image_url: string | null
-          name: string
+          profile_id: string
         }
         Insert: {
-          created_at?: string | null
-          description?: string | null
-          has_music?: boolean | null
+          establishment: string
+          hired_at?: string
           id?: string
-          image_url?: string | null
-          name: string
+          profile_id: string
         }
         Update: {
-          created_at?: string | null
-          description?: string | null
-          has_music?: boolean | null
+          establishment?: string
+          hired_at?: string
           id?: string
-          image_url?: string | null
-          name?: string
+          profile_id?: string
         }
         Relationships: []
       }
-      matches: {
+      establishment_inventory: {
         Row: {
-          challenge_text: string | null
           created_at: string
-          game_started: boolean | null
+          establishment: string
           id: string
+          item_name: string
+          last_restocked_at: string | null
+          max_stock: number
+          restock_price: number
+          restocking_until: string | null
+          stock_quantity: number
           updated_at: string
-          user1_id: string | null
-          user2_id: string | null
         }
         Insert: {
-          challenge_text?: string | null
           created_at?: string
-          game_started?: boolean | null
+          establishment: string
           id?: string
+          item_name: string
+          last_restocked_at?: string | null
+          max_stock?: number
+          restock_price: number
+          restocking_until?: string | null
+          stock_quantity?: number
           updated_at?: string
-          user1_id?: string | null
-          user2_id?: string | null
         }
         Update: {
-          challenge_text?: string | null
           created_at?: string
-          game_started?: boolean | null
+          establishment?: string
           id?: string
+          item_name?: string
+          last_restocked_at?: string | null
+          max_stock?: number
+          restock_price?: number
+          restocking_until?: string | null
+          stock_quantity?: number
           updated_at?: string
-          user1_id?: string | null
-          user2_id?: string | null
+        }
+        Relationships: []
+      }
+      establishment_status: {
+        Row: {
+          closed_at: string | null
+          establishment: string
+          id: string
+          is_open: boolean
+          restocking_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          establishment: string
+          id?: string
+          is_open?: boolean
+          restocking_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          establishment?: string
+          id?: string
+          is_open?: boolean
+          restocking_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          created_at: string
+          custom_effects: Json | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          item_name: string
+          item_type: string
+          profile_id: string
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          custom_effects?: Json | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          item_name: string
+          item_type: string
+          profile_id: string
+          quantity?: number
+        }
+        Update: {
+          created_at?: string
+          custom_effects?: Json | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          item_name?: string
+          item_type?: string
+          profile_id?: string
+          quantity?: number
+        }
+        Relationships: []
+      }
+      item_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          item_name: string
+          item_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          item_name: string
+          item_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          item_name?: string
+          item_type?: string | null
+        }
+        Relationships: []
+      }
+      medical_appointments: {
+        Row: {
+          appointment_description: string | null
+          appointment_name: string
+          approved_at: string | null
+          completed_at: string | null
+          consultation_time: number
+          created_at: string
+          health_increase: number
+          id: string
+          price: number
+          profile_id: string
+          status: string
+        }
+        Insert: {
+          appointment_description?: string | null
+          appointment_name: string
+          approved_at?: string | null
+          completed_at?: string | null
+          consultation_time: number
+          created_at?: string
+          health_increase: number
+          id?: string
+          price: number
+          profile_id: string
+          status?: string
+        }
+        Update: {
+          appointment_description?: string | null
+          appointment_name?: string
+          approved_at?: string | null
+          completed_at?: string | null
+          consultation_time?: number
+          created_at?: string
+          health_increase?: number
+          id?: string
+          price?: number
+          profile_id?: string
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "matches_user1_id_fkey"
-            columns: ["user1_id"]
+            foreignKeyName: "medical_appointments_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "matches_user2_id_fkey"
-            columns: ["user2_id"]
-            isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      menu_customizations: {
+        Row: {
+          created_at: string | null
+          custom_price: number | null
+          establishment: string
+          id: string
+          is_active: boolean | null
+          is_on_sale: boolean | null
+          item_id: string
+          sale_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_price?: number | null
+          establishment: string
+          id?: string
+          is_active?: boolean | null
+          is_on_sale?: boolean | null
+          item_id: string
+          sale_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_price?: number | null
+          establishment?: string
+          id?: string
+          is_active?: boolean | null
+          is_on_sale?: boolean | null
+          item_id?: string
+          sale_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
+          accepted_at: string | null
           content: string
-          created_at: string
-          id: number
-          location_name: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: number
-          location_name: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: number
-          location_name?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      mission_progress: {
-        Row: {
           created_at: string | null
+          expires_at: string | null
           id: string
-          mission_id: string
+          is_anonymous: boolean
+          recipient_name: string | null
+          recipient_profile_link: string | null
+          sender_profile_id: string
           status: string
-          student_id: string
         }
         Insert: {
+          accepted_at?: string | null
+          content: string
           created_at?: string | null
+          expires_at?: string | null
           id?: string
-          mission_id: string
+          is_anonymous?: boolean
+          recipient_name?: string | null
+          recipient_profile_link?: string | null
+          sender_profile_id: string
           status?: string
-          student_id: string
         }
         Update: {
+          accepted_at?: string | null
+          content?: string
           created_at?: string | null
+          expires_at?: string | null
           id?: string
-          mission_id?: string
+          is_anonymous?: boolean
+          recipient_name?: string | null
+          recipient_profile_link?: string | null
+          sender_profile_id?: string
           status?: string
-          student_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "mission_progress_mission_id_fkey"
-            columns: ["mission_id"]
+            foreignKeyName: "messages_sender_profile_id_fkey"
+            columns: ["sender_profile_id"]
             isOneToOne: false
-            referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mission_progress_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      missions: {
+      orders: {
         Row: {
+          accepted_at: string | null
           created_at: string | null
-          description: string
+          delivery_code: string | null
+          delivery_location: string | null
+          delivery_started_at: string | null
+          delivery_type: string
+          establishment: string
+          finish_at: string | null
           id: string
-          professor_id: string | null
-          title: string
-          xp_reward: number
+          item_effects: Json | null
+          item_name: string
+          item_price: number
+          item_type: string | null
+          preparation_time: number
+          profile_id: string
+          quantity: number
+          served_at: string | null
+          status: string
+          total_price: number
         }
         Insert: {
+          accepted_at?: string | null
           created_at?: string | null
-          description: string
+          delivery_code?: string | null
+          delivery_location?: string | null
+          delivery_started_at?: string | null
+          delivery_type?: string
+          establishment: string
+          finish_at?: string | null
           id?: string
-          professor_id?: string | null
-          title: string
-          xp_reward: number
+          item_effects?: Json | null
+          item_name: string
+          item_price: number
+          item_type?: string | null
+          preparation_time: number
+          profile_id: string
+          quantity?: number
+          served_at?: string | null
+          status?: string
+          total_price: number
         }
         Update: {
+          accepted_at?: string | null
           created_at?: string | null
-          description?: string
+          delivery_code?: string | null
+          delivery_location?: string | null
+          delivery_started_at?: string | null
+          delivery_type?: string
+          establishment?: string
+          finish_at?: string | null
           id?: string
-          professor_id?: string | null
-          title?: string
-          xp_reward?: number
+          item_effects?: Json | null
+          item_name?: string
+          item_price?: number
+          item_type?: string | null
+          preparation_time?: number
+          profile_id?: string
+          quantity?: number
+          served_at?: string | null
+          status?: string
+          total_price?: number
         }
         Relationships: [
           {
-            foreignKeyName: "missions_professor_id_fkey"
-            columns: ["professor_id"]
+            foreignKeyName: "orders_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_stats: {
+        Row: {
+          alcoholism: number
+          health: number
+          hunger: number
+          id: string
+          profile_id: string
+          thirst: number
+          updated_at: string
+        }
+        Insert: {
+          alcoholism?: number
+          health?: number
+          hunger?: number
+          id?: string
+          profile_id: string
+          thirst?: number
+          updated_at?: string
+        }
+        Update: {
+          alcoholism?: number
+          health?: number
+          hunger?: number
+          id?: string
+          profile_id?: string
+          thirst?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
-          bio: string | null
+          age_group: string | null
+          age_group_last_updated: string | null
           created_at: string
           id: string
+          last_rancho_use: string | null
+          last_roulette_spin: string | null
           name: string
-          photo_url: string | null
-          updated_at: string
+          role: string | null
           username: string
+          wallet_balance: number
         }
         Insert: {
-          bio?: string | null
-          created_at?: string
-          id: string
-          name: string
-          photo_url?: string | null
-          updated_at?: string
-          username: string
-        }
-        Update: {
-          bio?: string | null
+          age_group?: string | null
+          age_group_last_updated?: string | null
           created_at?: string
           id?: string
+          last_rancho_use?: string | null
+          last_roulette_spin?: string | null
+          name: string
+          role?: string | null
+          username: string
+          wallet_balance?: number
+        }
+        Update: {
+          age_group?: string | null
+          age_group_last_updated?: string | null
+          created_at?: string
+          id?: string
+          last_rancho_use?: string | null
+          last_roulette_spin?: string | null
           name?: string
-          photo_url?: string | null
-          updated_at?: string
+          role?: string | null
           username?: string
+          wallet_balance?: number
         }
         Relationships: []
       }
-      quiz_answers: {
+      refrigerator_items: {
         Row: {
-          answer: string
-          created_at: string
+          alcoholism_effect: number | null
+          establishment: string
+          expires_at: string
+          hunger_effect: number | null
           id: string
-          match_id: string
-          question_id: number
-          user_id: string
+          image_url: string | null
+          is_custom: boolean | null
+          item_description: string | null
+          item_id: string | null
+          item_name: string
+          item_type: string
+          preparation_time: number
+          price: number
+          stored_at: string | null
+          thirst_effect: number | null
         }
         Insert: {
-          answer: string
-          created_at?: string
+          alcoholism_effect?: number | null
+          establishment: string
+          expires_at?: string
+          hunger_effect?: number | null
           id?: string
-          match_id: string
-          question_id: number
-          user_id: string
+          image_url?: string | null
+          is_custom?: boolean | null
+          item_description?: string | null
+          item_id?: string | null
+          item_name: string
+          item_type: string
+          preparation_time: number
+          price: number
+          stored_at?: string | null
+          thirst_effect?: number | null
         }
         Update: {
-          answer?: string
-          created_at?: string
+          alcoholism_effect?: number | null
+          establishment?: string
+          expires_at?: string
+          hunger_effect?: number | null
           id?: string
-          match_id?: string
-          question_id?: number
-          user_id?: string
+          image_url?: string | null
+          is_custom?: boolean | null
+          item_description?: string | null
+          item_id?: string | null
+          item_name?: string
+          item_type?: string
+          preparation_time?: number
+          price?: number
+          stored_at?: string | null
+          thirst_effect?: number | null
         }
         Relationships: []
       }
-      quiz_results: {
+      transactions: {
         Row: {
-          compatibility_percentage: number
+          amount: number
           created_at: string
+          from_profile_id: string
           id: string
-          match_id: string
-          updated_at: string
-          user1_answers: Json
-          user2_answers: Json
+          to_profile_id: string
         }
         Insert: {
-          compatibility_percentage: number
+          amount: number
           created_at?: string
+          from_profile_id: string
           id?: string
-          match_id: string
-          updated_at?: string
-          user1_answers: Json
-          user2_answers: Json
+          to_profile_id: string
         }
         Update: {
-          compatibility_percentage?: number
+          amount?: number
           created_at?: string
+          from_profile_id?: string
           id?: string
-          match_id?: string
-          updated_at?: string
-          user1_answers?: Json
-          user2_answers?: Json
+          to_profile_id?: string
         }
         Relationships: []
       }
-      users: {
+      vouchers: {
         Row: {
-          created_at: string
-          element: string | null
+          created_at: string | null
+          drink_uses_left: number
+          establishment: string
+          food_uses_left: number
           id: string
-          is_professor: boolean | null
-          name: string
-          photo_url: string | null
-          rank: string
-          updated_at: string
-          username: string
-          xp: number
+          profile_id: string
         }
         Insert: {
-          created_at?: string
-          element?: string | null
+          created_at?: string | null
+          drink_uses_left?: number
+          establishment: string
+          food_uses_left?: number
           id?: string
-          is_professor?: boolean | null
-          name: string
-          photo_url?: string | null
-          rank?: string
-          updated_at?: string
-          username: string
-          xp?: number
+          profile_id: string
         }
         Update: {
-          created_at?: string
-          element?: string | null
+          created_at?: string | null
+          drink_uses_left?: number
+          establishment?: string
+          food_uses_left?: number
           id?: string
-          is_professor?: boolean | null
-          name?: string
-          photo_url?: string | null
-          rank?: string
-          updated_at?: string
-          username?: string
-          xp?: number
+          profile_id?: string
         }
         Relationships: []
       }
@@ -451,8 +767,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_xp: {
-        Args: { user_id_param: string; xp_to_add: number }
+      complete_medical_appointment: {
+        Args: { appointment_id_param: string }
+        Returns: undefined
+      }
+      decrement_stock: {
+        Args: { est_name: string; item: string; qty: number }
+        Returns: undefined
+      }
+      delete_expired_refrigerator_items: { Args: never; Returns: undefined }
+      increment_daily_creation: {
+        Args: {
+          p_creation_date: string
+          p_establishment: string
+          p_profile_id: string
+        }
+        Returns: undefined
+      }
+      increment_stock: {
+        Args: { est_name: string; item: string; qty: number }
+        Returns: undefined
+      }
+      transfer_balance: {
+        Args: {
+          receiver_id: string
+          sender_id: string
+          transfer_amount: number
+        }
+        Returns: undefined
+      }
+      update_establishment_status: {
+        Args: { establishment_name: string; new_status: boolean }
         Returns: undefined
       }
     }
